@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ollamaModel = "qwen2.5-coder:3b"
+	ollamaModel = "qwen2.5-coder:7b"
 	ollamaURL   = "http://localhost:11434/api/generate"
 )
 
@@ -79,9 +79,11 @@ func main() {
 Aşağıdaki HATA ÇIKTISI ve YARDIM METNİ'ni kullanarak doğru komutu bul.
 
 Kurallar:
-1. Sadece yardım metnindeki geçerli parametreleri kullan. Metin dışından uydurma.
-2. EĞER HATA "Eksik Argüman/Kaynak" ise (örneğin kullanıcı 'oc get' yazıp neyi getireceğini belirtmemişse), hata mesajında önerilen bilgi alma komutunu öner (örn: 'oc api-resources') veya en yaygın örneği ver (örn: 'oc get pods'). Sakın eksik argümanı olan bir komuta sadece flag ekleyerek cevap üretme!
-3. Cevabını KESİNLİKLE aşağıdaki formatta ver:
+1. Sadece yardım metnindeki geçerli parametreleri kullan.
+2. YAZIM HATASI KONTROLÜ: Hatalı komuttaki her kelimeyi yardım metnindeki geçerli kaynak/komut isimleriyle karşılaştır. 
+   "nodef" → "nodes" gibi benzer kelime varsa DOĞRUDAN düzelt, başka komut önerme.
+3. Eğer yazım hatası değil gerçekten eksik argüman ise, 'oc api-resources' gibi yardımcı komut öner.
+4. Cevabını KESİNLİKLE aşağıdaki formatta ver:
 AÇIKLAMA: <Kısa açıklama>
 KOMUT: <Sadece çalıştırılabilir tam komut>
 

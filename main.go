@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	ollamaModel = "qwen2.5-coder:7b"
+	ollamaModel = "qwen2.5-coder:3b"
 	ollamaURL   = "http://localhost:11434/api/generate"
 )
 
@@ -69,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	helpText := string(helpOutput)
+helpText := string(helpOutput)
 
 	if len(helpText) > 4000 {
 		helpText = helpText[:1500] + "\n\n...[METİN KISALTILDI]...\n\n" + helpText[len(helpText)-2500:]
@@ -79,10 +79,9 @@ func main() {
 Aşağıdaki HATA ÇIKTISI ve YARDIM METNİ'ni kullanarak doğru komutu bul.
 
 Kurallar:
-1. Sadece yardım metnindeki geçerli parametreleri kullan.
-2. YAZIM HATASI KONTROLÜ: Hatalı komuttaki her kelimeyi yardım metnindeki geçerli kaynak/komut isimleriyle karşılaştır. 
-   "nodef" → "nodes" gibi benzer kelime varsa DOĞRUDAN düzelt, başka komut önerme.
-3. Eğer yazım hatası değil gerçekten eksik argüman ise, 'oc api-resources' gibi yardımcı komut öner.
+1. Sadece yardım metnindeki geçerli parametreleri veya bilinen Kubernetes/OpenShift kaynaklarını kullan.
+2. YAZIM HATASI KONTROLÜ: Kullanıcı "storageclassclubs" gibi yanlış bir kelime yazdıysa ve sen bunun "storageclass" olması gerektiğini anladıysan, KOMUT kısmına düzeltilmiş halini yaz. AÇIKLAMA kısmında ise bu düzeltmeyi belirt.
+3. AÇIKLAMA ile KOMUT birbiriyle %%100 uyumlu olmalıdır. Açıklamada ne anlatıyorsan, komut olarak onu ver. Başka bir komuttan bahsetme.
 4. Cevabını KESİNLİKLE aşağıdaki formatta ver:
 AÇIKLAMA: <Kısa açıklama>
 KOMUT: <Sadece çalıştırılabilir tam komut>
@@ -97,7 +96,9 @@ KOMUT: <Sadece çalıştırılabilir tam komut>
 %s
 `, strings.TrimSpace(errorMessage), strings.TrimSpace(helpText), fullCommand)
 
-	fmt.Printf("🤖 Hata tespit edildi. Asistan analiz ediyor...\n\n")
+	// YENİ EKLENEN KISIM: Orijinal hatayı kullanıcıya gösteriyoruz
+	fmt.Printf("❌ Alınan Hata:\n%s\n\n", strings.TrimSpace(errorMessage))
+	fmt.Printf("🤖 Asistan analiz ediyor...\n\n")
 	
 	fullResponse := askOllama(prompt)
 

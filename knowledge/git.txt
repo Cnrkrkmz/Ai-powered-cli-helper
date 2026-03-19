@@ -1,3 +1,5 @@
+# TANIM: Git versiyon kontrol sistemi komutları
+# ANAHTAR KELİMELER: git, commit, push, pull, branch, merge, rebase, clone, stash, tag, remote
 # Git komutları için term-ai bilgi tabanı
 # Bölümler: [alt-komut] şeklinde tanımlanır
 # term-ai, hatalı komuttaki alt komutu otomatik algılar ve ilgili bölümü kullanır

@@ -1,0 +1,6 @@
+{
+  "ollama_url": "http://localhost:11434/api/generate",
+  "model": "qwen2.5-coder:3b",
+  "language": "tr",
+  "max_tokens": 150
+}

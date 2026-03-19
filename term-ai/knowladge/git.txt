@@ -1,0 +1,95 @@
+# Git komutları için term-ai bilgi tabanı
+# Bölümler: [alt-komut] şeklinde tanımlanır
+# term-ai, hatalı komuttaki alt komutu otomatik algılar ve ilgili bölümü kullanır
+
+[general]
+Git komutlarında branch adlarına, remote adlarına ve dosya yollarına dikkat et.
+Uzak repo adı genellikle "origin"dir.
+Branch adlarında büyük/küçük harf duyarlıdır.
+--force yerine mümkünse --force-with-lease kullan.
+
+[commit]
+Commit mesajı tırnak içinde olmalı: git commit -m "mesaj"
+Staged dosya yoksa önce git add yapılmalı.
+Boş commit için: git commit --allow-empty -m "mesaj"
+Son commit mesajını değiştir: git commit --amend --no-edit
+
+[push]
+Yeni branch push: git push -u origin <branch-adı>
+Force push (dikkatli): git push --force-with-lease origin <branch>
+Tag push: git push origin --tags
+Tüm branch: git push --all origin
+
+[pull]
+Rebase ile pull: git pull --rebase origin <branch>
+Merge stratejisi: git pull --no-rebase origin <branch>
+Çakışma varsa: git pull --rebase ve sonra git rebase --continue
+
+[merge]
+Merge: git merge <branch-adı>
+Squash merge: git merge --squash <branch>
+Abort: git merge --abort
+
+[rebase]
+İnteraktif rebase (son 3 commit): git rebase -i HEAD~3
+Abort: git rebase --abort
+Continue: git rebase --continue
+Skip: git rebase --skip
+
+[checkout]
+Branch değiştir: git checkout <branch-adı>
+Yeni branch oluştur ve geç: git checkout -b <yeni-branch>
+Dosyayı geri al: git checkout -- <dosya>
+Detached HEAD'den kurtul: git checkout main
+
+[branch]
+Tüm branchları gör: git branch -a
+Branch sil (local): git branch -d <branch>
+Branch sil (force): git branch -D <branch>
+Remote branch sil: git push origin --delete <branch>
+Branch yeniden adlandır: git branch -m <eski> <yeni>
+
+[stash]
+Değişiklikleri stash: git stash push -m "açıklama"
+Listele: git stash list
+Uygula: git stash apply stash@{0}
+Uygula ve sil: git stash pop
+Belirli stash sil: git stash drop stash@{0}
+
+[log]
+Kısa log: git log --oneline -20
+Branch grafiği: git log --oneline --graph --all
+Dosya geçmişi: git log --follow -p -- <dosya>
+Yazar filtresi: git log --author="İsim"
+
+[reset]
+Soft reset (commit geri al, değişiklikler kalır): git reset --soft HEAD~1
+Mixed reset (staged geri al): git reset HEAD~1
+Hard reset (DİKKAT - değişiklikler silinir): git reset --hard HEAD~1
+Belirli dosyayı unstage: git reset HEAD <dosya>
+
+[diff]
+Staged değişiklikler: git diff --cached
+Branch karşılaştır: git diff main..feature-branch
+İstatistik: git diff --stat
+
+[tag]
+Tag oluştur: git tag -a v1.0.0 -m "sürüm 1.0.0"
+Tag listele: git tag -l
+Tag sil: git tag -d v1.0.0
+Remote tag sil: git push origin --delete v1.0.0
+
+[clone]
+Klonla: git clone <url>
+Belirli branch: git clone -b <branch> <url>
+Sığ klon (hızlı): git clone --depth 1 <url>
+
+[remote]
+Remote listele: git remote -v
+Remote ekle: git remote add origin <url>
+Remote değiştir: git remote set-url origin <url>
+Remote sil: git remote remove <isim>
+
+[fetch]
+Tüm remoteları güncelle: git fetch --all
+Prune (silinmiş remote branchları temizle): git fetch --prune

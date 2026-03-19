@@ -1,0 +1,21 @@
+# stanctl — Debug, benchmark ve dump
+
+[debug]
+Debug paketi oluşturur (loglar, manifestler, sistem bilgisi, healthcheck, config).
+Kullanım: stanctl debug [-o <dizin>] [-n <namespace'ler>]
+Çıktı: -o, --output-dir
+Namespace filtre: -n, --namespaces ns1,ns2
+Sıkıştırma kapatma: --no-compress
+
+[benchmark-fio]
+Storage I/O performans testi. Dizin belirtilmezse tüm volume'lar test edilir.
+Kullanım: stanctl benchmark fio [flags]
+Alias: stanctl bm
+Tek dizin: --directory <yol>
+Varsayılan test dizinleri: /mnt/instana/stanctl/{data,metrics,analytics,objects}
+
+[dump-config-data]
+Config verisini başka bir kuruluma aktarmak için dump eder.
+Kullanım: stanctl dump config-data [-o <dizin>]
+Alias: stanctl dm
+Çıktı: -o, --output-dir (varsayılan: mevcut dizin)

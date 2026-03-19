@@ -1,0 +1,10 @@
+# git — Push işlemleri
+
+Yeni branch'i ilk kez push: git push -u origin <branch-adı>
+Mevcut branch push: git push origin <branch-adı>
+Force push (güvenli): git push --force-with-lease origin <branch>
+Force push (dikkatli): git push --force origin <branch>
+Tag push: git push origin <tag-adı>
+Tüm tagleri push: git push origin --tags
+Tüm branchleri push: git push --all origin
+Remote branch sil: git push origin --delete <branch-adı>

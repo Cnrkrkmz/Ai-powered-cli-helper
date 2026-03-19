@@ -1,0 +1,36 @@
+# stanctl — Backend ve datastore yönetimi
+
+[backend-apply]
+Instana backend'i kurar veya günceller (cluster zaten ayaktaysa kullan).
+Kullanım: stanctl backend apply [flags]
+Alias: stanctl be a
+up komutundaki tüm --core-* ve --unit-* flagler burada da geçerli.
+Dry run: --dry-run
+Preflight atla: --skip-preflight-check
+Air-gapped: --air-gapped
+Temel flagler:
+  --core-base-domain <domain>
+  --download-key <key>
+  --install-type demo | production
+  --instana-release <sayı> VEYA --instana-version <versiyon> (ikisi birden kullanılmaz)
+
+[datastores-apply]
+Datastore'ları kurar veya günceller.
+Kullanım: stanctl datastores apply [flags]
+Alias: stanctl ds a
+Belirli datastore: -i cassandra | elasticsearch | kafka | clickhouse | postgres | beeinstana
+Birden fazla: stanctl datastores apply -i cassandra -i kafka
+Her datastore için flag formatı: --<isim>-user, --<isim>-password, --<isim>-admin-user, --<isim>-admin-password
+Belirtilmezse şifreler otomatik üretilir.
+Air-gapped: --air-gapped
+Dry run: --dry-run (global flag olarak)
+
+[migrate]
+Self-Hosted Classic edition'dan veri göçü.
+Kullanım: stanctl migrate -f <arsiv-dosyası> [flags]
+Alias: stanctl mg
+Zorunlu: -f, --file <migrasyon-arsivi>
+Install type: --install-type demo | production
+Sürüm: --instana-release VEYA --instana-version
+Multi-node: --multi-node-enable --multi-node-ips <ip'ler>
+Volume dizinleri: --volume-data, --volume-metrics, --volume-analytics, --volume-objects

@@ -1,0 +1,8 @@
+# git — Commit işlemleri
+
+Commit mesajı tırnak içinde olmalı: git commit -m "mesaj"
+Staged dosya yoksa önce git add yapılmalı.
+Boş commit: git commit --allow-empty -m "mesaj"
+Son commit mesajını değiştir: git commit --amend -m "yeni mesaj"
+Commit değiştir (mesaj aynı kalsın): git commit --amend --no-edit
+Tüm tracked dosyaları stage et ve commit: git commit -am "mesaj"

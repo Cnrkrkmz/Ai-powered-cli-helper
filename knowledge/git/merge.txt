@@ -1,0 +1,13 @@
+# git — Merge ve rebase
+
+Merge: git merge <branch>
+Squash merge: git merge --squash <branch>
+No fast-forward: git merge --no-ff <branch>
+Merge iptal: git merge --abort
+Çakışma çözüldükten sonra: git add <dosya> && git merge --continue
+
+Rebase: git rebase <branch>
+İnteraktif rebase (son 3 commit): git rebase -i HEAD~3
+Rebase iptal: git rebase --abort
+Rebase devam: git rebase --continue
+Rebase atla: git rebase --skip

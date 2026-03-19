@@ -1,0 +1,13 @@
+# stanctl — Versiyon ve image yönetimi
+
+[versions-identify]
+Mevcut kurulumla uyumlu Instana versiyonlarını listeler.
+Kullanım: stanctl versions identify [flags]
+Alias: stanctl v id
+Registry erişimi gerekli: --download-key veya --registry-user/password/url
+
+[versions-list-images]
+Belirli bir Instana release'inin image listesini gösterir.
+Kullanım: stanctl versions list-images --instana-version <versiyon> [flags]
+Alias: stanctl v ls
+Zorunlu: --instana-version <versiyon>

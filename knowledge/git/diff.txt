@@ -1,0 +1,9 @@
+# git — Diff ve karşılaştırma
+
+Unstaged değişiklikler: git diff
+Staged değişiklikler: git diff --cached
+Branch karşılaştır: git diff main..feature-branch
+Commit karşılaştır: git diff <hash1> <hash2>
+Sadece değişen dosyaları göster: git diff --name-only
+İstatistik: git diff --stat
+Belirli dosya: git diff -- <dosya>

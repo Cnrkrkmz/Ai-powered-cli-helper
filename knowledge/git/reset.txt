@@ -1,0 +1,9 @@
+# git — Reset ve geri alma
+
+Soft reset (commit geri al, değişiklikler staged kalır): git reset --soft HEAD~1
+Mixed reset (commit geri al, değişiklikler unstaged): git reset HEAD~1
+Hard reset (DİKKAT - değişiklikler tamamen silinir): git reset --hard HEAD~1
+Belirli commit'e hard reset: git reset --hard <commit-hash>
+Belirli dosyayı unstage et: git reset HEAD <dosya>
+Dosyadaki değişikliği geri al (discard): git checkout -- <dosya>
+Commit'i geri alan yeni commit oluştur (güvenli): git revert <commit-hash>

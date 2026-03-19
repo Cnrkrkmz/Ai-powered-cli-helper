@@ -1,0 +1,17 @@
+# stanctl — Lisans yönetimi
+
+[license-download]
+Lisans dosyasını indirir.
+Kullanım: stanctl license download [--sales-key <key>] [-o <dizin>]
+Alias: stanctl lc
+Çıktı: -o, --output-dir (varsayılan: /root/.stanctl/license.json)
+
+[license-info]
+Mevcut lisansın geçerlilik bilgisini gösterir.
+Kullanım: stanctl license info
+
+[license-update]
+Lisansı, download key ve sales key'i günceller.
+Kullanım: stanctl license update [flags]
+Online: --download-key ve/veya --sales-key
+Air-gapped (dosyadan): -f, --file <lisans-dosyası>

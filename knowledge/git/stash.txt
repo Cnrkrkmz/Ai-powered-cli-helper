@@ -1,0 +1,10 @@
+# git — Stash işlemleri
+
+Değişiklikleri sakla: git stash push -m "açıklama"
+Untracked dosyaları da sakla: git stash push -u -m "açıklama"
+Listele: git stash list
+Uygula (stash'i koru): git stash apply stash@{0}
+Uygula ve sil: git stash pop
+Belirli stash sil: git stash drop stash@{0}
+Tüm stash'leri sil: git stash clear
+Stash'i branch olarak aç: git stash branch <branch-adı> stash@{0}

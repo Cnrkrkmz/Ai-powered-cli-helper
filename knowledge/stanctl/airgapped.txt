@@ -1,0 +1,18 @@
+# stanctl — Air-gapped (internetsiz) ortam
+
+[air-gapped-package]
+Air-gapped paketi oluşturur (internet erişimli makinede çalıştırılır).
+Kullanım: stanctl air-gapped package [flags]
+Alias: stanctl agap
+Sürüm: --instana-release <sayı> VEYA --instana-version <versiyon>
+Çıktı: -o, --output-dir <dizin>
+Lisans: -l, --license-file <dosya>
+Platform: -p, --platform linux/amd64 (varsayılan)
+Cache kapatma: --no-cache
+Registry erişimi: --download-key veya --registry-user/password/url
+
+[air-gapped-import]
+Air-gapped paketini hedef sisteme aktarır.
+Kullanım: stanctl air-gapped import -f <paket-dosyası> [flags]
+Zorunlu: -f, --file <arsiv-dosyası>
+Opsiyonel: --cluster-data-dir <dizin>

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -27,11 +28,14 @@ const (
 // ─── Veri Yapıları ────────────────────────────────────────────────────────────
 
 type Config struct {
-	OllamaURL string `json:"ollama_url"`
-	Model     string `json:"model"`
-	NLModel   string `json:"nl_model"`  // NL modu için ayrı (opsiyonel, küçük model)
-	Language  string `json:"language"`  // "tr" veya "en"
-	MaxTokens int    `json:"max_tokens"`
+	OllamaURL     string `json:"ollama_url"`
+	Model         string `json:"model"`
+	NLModel       string `json:"nl_model"`
+	Language      string `json:"language"`
+	MaxTokens     int    `json:"max_tokens"`
+	CloudProvider string `json:"cloud_provider"` // "anthropic" | "gemini" | "openai"
+	CloudAPIKey   string `json:"cloud_api_key"`
+	CloudModel    string `json:"cloud_model"`
 }
 
 type HistoryEntry struct {
@@ -40,9 +44,20 @@ type HistoryEntry struct {
 	ErrorOutput string `json:"error_output"`
 	Suggestion  string `json:"suggestion"`
 	Executed    bool   `json:"executed"`
-	Mode        string `json:"mode"` // "fix" veya "nl"
+	Mode        string `json:"mode"` // "fix" | "nl"
+	Backend     string `json:"backend"` // "local" | "cloud"
 }
 
+// ToolMeta: bir araç klasörünün _meta.txt'sinden okunan bilgiler
+type ToolMeta struct {
+	Name        string
+	Dir         string
+	Description string
+	Keywords    []string
+	SubFiles    map[string]string
+}
+
+// Ollama tipleri
 type OllamaRequest struct {
 	Model   string                 `json:"model"`
 	Prompt  string                 `json:"prompt"`
@@ -50,17 +65,34 @@ type OllamaRequest struct {
 	Options map[string]interface{} `json:"options,omitempty"`
 }
 
-type OllamaResponse struct {
+type OllamaStreamChunk struct {
 	Response string `json:"response"`
 	Done     bool   `json:"done"`
 }
 
-// ToolMeta: bir knowledge dosyasının adı, yolu ve metadata satırlarını tutar
-type ToolMeta struct {
-	Name        string
-	FilePath    string
-	Description string // # TANIM: satırından
-	Keywords    []string // # ANAHTAR KELİMELER: satırından (virgülle ayrılmış liste)
+// Anthropic tipleri
+type AnthropicRequest struct {
+	Model     string             `json:"model"`
+	MaxTokens int                `json:"max_tokens"`
+	Stream    bool               `json:"stream"`
+	Messages  []AnthropicMessage `json:"messages"`
+}
+
+type AnthropicMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+// OpenAI / Gemini (OpenAI compat) tipleri
+type OpenAIRequest struct {
+	Model    string          `json:"model"`
+	Stream   bool            `json:"stream"`
+	Messages []OpenAIMessage `json:"messages"`
+}
+
+type OpenAIMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 // ─── Ana Program ──────────────────────────────────────────────────────────────
@@ -92,9 +124,39 @@ func main() {
 
 	cfg := loadConfig()
 
+	// ── Flag'leri parse et ───────────────────────────────────────────────────
+	ignoreHistory := false
+	useCloud := false
+	useChat := false
+	filteredArgs := args[:0]
+	for _, a := range args {
+		switch a {
+		case "--no-history", "--ignore-hist":
+			ignoreHistory = true
+		case "--cloud":
+			useCloud = true
+		case "--chat":
+			useChat = true
+		default:
+			filteredArgs = append(filteredArgs, a)
+		}
+	}
+	args = filteredArgs
+
+	if len(args) == 0 {
+		showHelp()
+		os.Exit(1)
+	}
+
+	if useChat {
+		query := strings.Join(args, " ")
+		handleChatMode(cfg, query, ignoreHistory, useCloud)
+		return
+	}
+
 	if isNLQuery(args) {
 		query := strings.Join(args, " ")
-		handleNLMode(cfg, query)
+		handleNLMode(cfg, query, ignoreHistory, useCloud)
 		return
 	}
 
@@ -112,16 +174,22 @@ func main() {
 	baseCommand := args[0]
 	subCommand := extractSubCommand(args[1:])
 
-	if cached := findInHistory(fullCommand, errorMessage); cached != "" {
-		fmt.Printf("❌ Hata:\n%s\n\n", errorMessage)
-		fmt.Printf("📦 Geçmiş öneri bulundu:\n")
-		fmt.Printf("▶ Önerilen Komut: %s\n", cached)
-		fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
-		if readYesNo() {
-			runCommand(cached)
+	// Geçmiş kontrolü
+	if !ignoreHistory {
+		if cached := findInHistory(fullCommand, errorMessage); cached != "" {
+			fmt.Printf("❌ Hata:\n%s\n\n", errorMessage)
+			fmt.Printf("📦 Geçmiş öneri bulundu:\n")
+			fmt.Printf("▶ Önerilen Komut: %s\n", cached)
+			fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
+			if readYesNo() {
+				runCommand(cached)
+			}
+			return
 		}
-		return
 	}
+
+	// Maskeleme
+	safeErrorMessage := maskSensitiveData(errorMessage)
 
 	toolContext := getSmartContext(baseCommand, subCommand)
 	contextPrompt := ""
@@ -130,29 +198,39 @@ func main() {
 			strings.ToUpper(baseCommand), strings.ToUpper(subCommand), toolContext)
 	}
 
-	prompt := buildFixPrompt(cfg.Language, contextPrompt, fullCommand, errorMessage)
+	prompt := buildFixPrompt(cfg.Language, contextPrompt, fullCommand, safeErrorMessage)
+
+	backend := "local"
+	if useCloud {
+		backend = "cloud"
+	}
 
 	fmt.Printf("❌ Hata:\n%s\n\n", errorMessage)
-	fmt.Printf("🤖 [%s] çözüm aranıyor...\n\n", cfg.Model)
+	if safeErrorMessage != errorMessage {
+		fmt.Printf("🔒 Hassas veri maskelendi\n\n")
+	}
+
+	model := resolveModel(cfg, useCloud, false)
+	fmt.Printf("🤖 [%s/%s] çözüm aranıyor...\n\n", backend, model)
 
 	start := time.Now()
-	fullResponse := askOllama(cfg.OllamaURL, cfg.Model, prompt, 150)
+	suggestedCmd := askLLM(cfg, prompt, 150, useCloud)
 	elapsed := time.Since(start)
 
-	suggestedCmd := cleanResponse(fullResponse)
+	suggestedCmd = cleanResponse(suggestedCmd)
 
 	if suggestedCmd == "" {
-		fmt.Println("⚠️  Model uygun bir komut üretemedi.")
+		fmt.Println("\n⚠️  Model uygun bir komut üretemedi.")
 		os.Exit(1)
 	}
 
 	if isDangerous(suggestedCmd) {
-		fmt.Println("⛔ Güvenlik: Tehlikeli pattern tespit edildi. Engellendi.")
+		fmt.Println("\n⛔ Güvenlik: Tehlikeli pattern tespit edildi. Engellendi.")
 		os.Exit(1)
 	}
 
-	fmt.Printf("▶ Önerilen Komut: %s\n", suggestedCmd)
-	fmt.Printf("▶ Süre: %.1fs | Model: %s\n", elapsed.Seconds(), cfg.Model)
+	fmt.Printf("\n▶ Önerilen Komut: %s\n", suggestedCmd)
+	fmt.Printf("▶ Süre: %.1fs | %s/%s\n", elapsed.Seconds(), backend, model)
 	fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
 
 	executed := false
@@ -163,14 +241,17 @@ func main() {
 		fmt.Println("İptal edildi.")
 	}
 
-	saveHistory(HistoryEntry{
-		Timestamp:   time.Now().Format(time.RFC3339),
-		Command:     fullCommand,
-		ErrorOutput: errorMessage,
-		Suggestion:  suggestedCmd,
-		Executed:    executed,
-		Mode:        "fix",
-	})
+	if !ignoreHistory {
+		saveHistory(HistoryEntry{
+			Timestamp:   time.Now().Format(time.RFC3339),
+			Command:     fullCommand,
+			ErrorOutput: safeErrorMessage,
+			Suggestion:  suggestedCmd,
+			Executed:    executed,
+			Mode:        "fix",
+			Backend:     backend,
+		})
+	}
 }
 
 // ─── NL MODU ─────────────────────────────────────────────────────────────────
@@ -190,59 +271,64 @@ func isNLQuery(args []string) bool {
 	return err != nil
 }
 
-func handleNLMode(cfg Config, query string) {
+func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 	fmt.Printf("🧠 NL modu: \"%s\"\n\n", query)
 
-	knowledgeFiles := listKnowledgeFiles()
-	if len(knowledgeFiles) == 0 {
-		fmt.Println("⚠️  ~/.term-ai/knowledge/ dizininde hiç dosya bulunamadı.")
+	tools := listTools()
+	if len(tools) == 0 {
+		fmt.Println("⚠️  ~/.term-ai/knowledge/ dizininde hiç araç klasörü bulunamadı.")
 		os.Exit(1)
 	}
 
-	// ── Adım 1: Araç tespiti — tamamen modelsiz, keyword matching ────────────
+	// ── Adım 1: Araç tespiti (modelsiz) ──────────────────────────────────────
 	fmt.Printf("🔍 Araç tespiti yapılıyor...\n")
-	detectStart := time.Now()
-	detectedTool := detectToolByKeywords(query, knowledgeFiles)
-	detectElapsed := time.Since(detectStart)
-	fmt.Printf("   → \"%s\" (%.0fms)\n\n", detectedTool, float64(detectElapsed.Microseconds())/1000)
+	t0 := time.Now()
+	detectedTool := detectToolByKeywords(query, tools)
+	t1 := time.Since(t0)
+	fmt.Printf("   → araç: \"%s\" (%.0fms)\n", detectedTool, float64(t1.Microseconds())/1000)
 
-	// ── Adım 2: İlgili knowledge dosyasını yükle ─────────────────────────────
+	// ── Adım 2: Alt dosya tespiti (modelsiz) ─────────────────────────────────
 	var toolContext string
+	var subFile string
 	if detectedTool != "none" {
-		if meta, ok := knowledgeFiles[detectedTool]; ok {
-			toolContext = tryReadFile(meta.FilePath)
-		}
+		meta := tools[detectedTool]
+		subFile = detectSubFileByKeywords(query, meta)
+		fmt.Printf("   → dosya:  \"%s/%s\"\n\n", detectedTool, subFile)
+		toolContext = loadSubFileContext(meta, subFile)
+	} else {
+		fmt.Printf("\n")
 	}
 	if toolContext == "" {
-		toolContext = gatherAllGeneralSections(knowledgeFiles)
+		toolContext = gatherAllGeneralSections(tools)
 	}
 
-	// ── Adım 3: Komut üret — NLModel varsa onu kullan, yoksa Model ───────────
-	nlModel := cfg.NLModel
-	if nlModel == "" {
-		nlModel = cfg.Model
+	// ── Adım 3: Komut üret ───────────────────────────────────────────────────
+	backend := "local"
+	if useCloud {
+		backend = "cloud"
 	}
-	fmt.Printf("🤖 [%s] komut üretiliyor...\n\n", nlModel)
-	genStart := time.Now()
+	model := resolveModel(cfg, useCloud, true)
+	fmt.Printf("🤖 [%s/%s] komut üretiliyor...\n\n", backend, model)
+
+	t2 := time.Now()
 	prompt := buildNLPrompt(cfg.Language, toolContext, detectedTool, query)
-	response := askOllama(cfg.OllamaURL, nlModel, prompt, 400)
-	genElapsed := time.Since(genStart)
+	suggestedCmd := askLLM(cfg, prompt, 400, useCloud)
+	t3 := time.Since(t2)
 
-	suggestedCmd := cleanResponse(response)
+	suggestedCmd = cleanResponse(suggestedCmd)
 
 	if suggestedCmd == "" {
-		fmt.Println("⚠️  Model bir komut üretemedi. Knowledge dosyasını genişletmeyi dene.")
+		fmt.Println("\n⚠️  Model bir komut üretemedi.")
 		os.Exit(1)
 	}
 
 	if isDangerous(suggestedCmd) {
-		fmt.Println("⛔ Güvenlik: Tehlikeli pattern tespit edildi. Engellendi.")
+		fmt.Println("\n⛔ Güvenlik: Tehlikeli pattern tespit edildi. Engellendi.")
 		os.Exit(1)
 	}
 
-	totalElapsed := detectElapsed + genElapsed
-	fmt.Printf("▶ Önerilen Komut: %s\n", suggestedCmd)
-	fmt.Printf("▶ Toplam süre: %.1fs | Model: %s\n", totalElapsed.Seconds(), nlModel)
+	fmt.Printf("\n▶ Önerilen Komut: %s\n", suggestedCmd)
+	fmt.Printf("▶ Toplam süre: %.1fs | %s/%s\n", (t1 + t3).Seconds(), backend, model)
 	fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
 
 	executed := false
@@ -253,118 +339,543 @@ func handleNLMode(cfg Config, query string) {
 		fmt.Println("İptal edildi.")
 	}
 
-	saveHistory(HistoryEntry{
-		Timestamp:  time.Now().Format(time.RFC3339),
-		Command:    query,
-		Suggestion: suggestedCmd,
-		Executed:   executed,
-		Mode:       "nl",
-	})
+	if !ignoreHistory {
+		saveHistory(HistoryEntry{
+			Timestamp:  time.Now().Format(time.RFC3339),
+			Command:    query,
+			Suggestion: suggestedCmd,
+			Executed:   executed,
+			Mode:       "nl",
+			Backend:    backend,
+		})
+	}
 }
 
-// detectToolByKeywords: model çağrısı yapmadan, sorgu ile knowledge
-// dosyalarının anahtar kelimelerini karşılaştırarak araç tespiti yapar.
-//
-// Puanlama:
-//   +3  → araç adının kendisi sorguda geçiyor (en güçlü sinyal)
-//   +2  → bir anahtar kelime tam kelime olarak eşleşiyor
-//   +1  → bir anahtar kelime kısmi olarak eşleşiyor
-//
-// En yüksek puanlı araç döner; eşit puan varsa önce bulunan kazanır.
-// Hiçbir araç en az 1 puan alamazsa "none" döner.
+// ─── CHAT MODU ────────────────────────────────────────────────────────────────
+
+// handleChatMode: --chat flag’i ile serbest konuşma modu.
+// Terminal komutu üretme zorunluluğu yok, model istediği gibi cevap verebilir.
+func handleChatMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
+	backend := "local"
+	if useCloud {
+		backend = "cloud"
+	}
+	model := resolveModel(cfg, useCloud, true)
+	fmt.Printf("💬 Sohbet modu [%s/%s]\n\n", backend, model)
+
+	safeQuery := maskSensitiveData(query)
+	if safeQuery != query {
+		fmt.Printf("🔒 Hassas veri maskelendi\n\n")
+	}
+
+	prompt := buildChatPrompt(cfg.Language, safeQuery)
+
+	start := time.Now()
+	response := askLLM(cfg, prompt, 1000, useCloud)
+	elapsed := time.Since(start)
+
+	response = strings.TrimSpace(response)
+	if response == "" {
+		fmt.Println("\n⚠️  Model cevap üretemedi.")
+		os.Exit(1)
+	}
+
+	fmt.Printf("\n\n▶ Süre: %.1fs | %s/%s\n", elapsed.Seconds(), backend, model)
+
+	if !ignoreHistory {
+		saveHistory(HistoryEntry{
+			Timestamp:  time.Now().Format(time.RFC3339),
+			Command:    query,
+			Suggestion: response,
+			Executed:   false,
+			Mode:       "chat",
+			Backend:    backend,
+		})
+	}
+}
+
+func buildChatPrompt(lang, query string) string {
+	if lang == "en" {
+		return fmt.Sprintf(`You are a helpful terminal assistant. Answer the following question clearly and concisely.
+Do NOT force a terminal command if the question is conversational.
+
+Question: %s`, query)
+	}
+	return fmt.Sprintf(`Sen yardımcı bir terminal asistanısın. Aşağıdaki soruyu açık ve net şekilde yanıtla.
+Eğer soru genel veya sohbet amaçlıysa terminal komutu vermeye zorlanma, düz metin olarak cevap ver.
+
+Soru: %s`, query)
+}
+
+// ─── LLM Yönlendirici ─────────────────────────────────────────────────────────
+
+// resolveModel: hangi modelin kullanıldığını döner (görüntüleme için)
+func resolveModel(cfg Config, useCloud bool, isNL bool) string {
+	if useCloud {
+		if cfg.CloudModel != "" {
+			return cfg.CloudModel
+		}
+		switch cfg.CloudProvider {
+		case "anthropic":
+			return "claude-haiku-4-5"
+		case "gemini":
+			return "gemini-2.0-flash"
+		case "openai":
+			return "gpt-4o-mini"
+		default:
+			return "cloud-model"
+		}
+	}
+	if isNL && cfg.NLModel != "" {
+		return cfg.NLModel
+	}
+	return cfg.Model
+}
+
+// askLLM: cloud=true ise cloud API'ye, false ise Ollama'ya gönderir.
+// Her iki durumda da streaming kullanır.
+func askLLM(cfg Config, prompt string, maxTokens int, useCloud bool) string {
+	if useCloud {
+		if cfg.CloudAPIKey == "" {
+			fmt.Println("❌ Cloud modu için config.json'a cloud_api_key eklemelisin.")
+			os.Exit(1)
+		}
+		return askCloud(cfg, prompt, maxTokens)
+	}
+
+	model := cfg.Model
+	if cfg.NLModel != "" {
+		model = cfg.NLModel
+	}
+	return askOllamaStream(cfg.OllamaURL, model, prompt, maxTokens)
+}
+
+// ─── Ollama (Streaming) ───────────────────────────────────────────────────────
+
+func askOllamaStream(ollamaURL, model, prompt string, numPredict int) string {
+	reqBody := OllamaRequest{
+		Model:  model,
+		Prompt: prompt,
+		Stream: true,
+		Options: map[string]interface{}{
+			"temperature": 0.1,
+			"num_predict": numPredict,
+			"stop":        []string{"\n\n", "---"},
+		},
+	}
+
+	jsonData, _ := json.Marshal(reqBody)
+	client := &http.Client{Timeout: 90 * time.Second}
+
+	resp, err := client.Post(ollamaURL, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("❌ Ollama'ya ulaşılamadı (%s)\n", ollamaURL)
+		fmt.Println("   → 'ollama serve' çalışıyor mu?")
+		fmt.Printf("   → Model kurulu mu? 'ollama pull %s'\n", model)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	var fullResponse strings.Builder
+	decoder := json.NewDecoder(resp.Body)
+
+	for {
+		var chunk OllamaStreamChunk
+		if err := decoder.Decode(&chunk); err != nil {
+			if err == io.EOF {
+				break
+			}
+			break
+		}
+		if chunk.Response != "" {
+			fmt.Print(chunk.Response)
+			fullResponse.WriteString(chunk.Response)
+		}
+		if chunk.Done {
+			break
+		}
+	}
+
+	return fullResponse.String()
+}
+
+// ─── Cloud API (Streaming) ────────────────────────────────────────────────────
+
+func askCloud(cfg Config, prompt string, maxTokens int) string {
+	switch cfg.CloudProvider {
+	case "anthropic":
+		return askAnthropic(cfg, prompt, maxTokens)
+	case "openai":
+		return askOpenAICompat(cfg, prompt, maxTokens,
+			"https://api.openai.com/v1/chat/completions",
+			"Bearer "+cfg.CloudAPIKey)
+	case "gemini":
+		model := cfg.CloudModel
+		if model == "" {
+			model = "gemini-2.0-flash"
+		}
+		url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?model=%s", model)
+		return askOpenAICompat(cfg, prompt, maxTokens, url, "Bearer "+cfg.CloudAPIKey)
+	default:
+		fmt.Printf("❌ Bilinmeyen cloud provider: %s (anthropic | gemini | openai)\n", cfg.CloudProvider)
+		os.Exit(1)
+	}
+	return ""
+}
+
+// askAnthropic: Anthropic Messages API, streaming
+func askAnthropic(cfg Config, prompt string, maxTokens int) string {
+	model := cfg.CloudModel
+	if model == "" {
+		model = "claude-haiku-4-5"
+	}
+
+	reqBody := AnthropicRequest{
+		Model:     model,
+		MaxTokens: maxTokens,
+		Stream:    true,
+		Messages:  []AnthropicMessage{{Role: "user", Content: prompt}},
+	}
+
+	jsonData, _ := json.Marshal(reqBody)
+	client := &http.Client{Timeout: 60 * time.Second}
+
+	req, _ := http.NewRequest("POST", "https://api.anthropic.com/v1/messages", bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", cfg.CloudAPIKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("❌ Anthropic API hatası: %v\n", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Printf("❌ Anthropic API %d: %s\n", resp.StatusCode, string(body))
+		os.Exit(1)
+	}
+
+	// SSE stream parse
+	var fullResponse strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &event); err != nil {
+			continue
+		}
+
+		// content_block_delta eventi
+		if event["type"] == "content_block_delta" {
+			if delta, ok := event["delta"].(map[string]interface{}); ok {
+				if text, ok := delta["text"].(string); ok {
+					fmt.Print(text)
+					fullResponse.WriteString(text)
+				}
+			}
+		}
+	}
+
+	return fullResponse.String()
+}
+
+// askOpenAICompat: OpenAI ve Gemini (OpenAI uyumlu), streaming
+func askOpenAICompat(cfg Config, prompt string, maxTokens int, apiURL, authHeader string) string {
+	model := cfg.CloudModel
+	if model == "" {
+		if cfg.CloudProvider == "gemini" {
+			model = "gemini-2.0-flash"
+		} else {
+			model = "gpt-4o-mini"
+		}
+	}
+
+	reqBody := OpenAIRequest{
+		Model:    model,
+		Stream:   true,
+		Messages: []OpenAIMessage{{Role: "user", Content: prompt}},
+	}
+
+	jsonData, _ := json.Marshal(reqBody)
+	client := &http.Client{Timeout: 60 * time.Second}
+
+	req, _ := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", authHeader)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("❌ Cloud API hatası: %v\n", err)
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Printf("❌ Cloud API %d: %s\n", resp.StatusCode, string(body))
+		os.Exit(1)
+	}
+
+	var fullResponse strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+
+		var chunk map[string]interface{}
+		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+			continue
+		}
+
+		if choices, ok := chunk["choices"].([]interface{}); ok && len(choices) > 0 {
+			if choice, ok := choices[0].(map[string]interface{}); ok {
+				if delta, ok := choice["delta"].(map[string]interface{}); ok {
+					if content, ok := delta["content"].(string); ok {
+						fmt.Print(content)
+						fullResponse.WriteString(content)
+					}
+				}
+			}
+		}
+	}
+
+	return fullResponse.String()
+}
+
+// ─── Veri Maskeleme ───────────────────────────────────────────────────────────
+
+var maskPatterns = []struct {
+	pattern     *regexp.Regexp
+	replacement string
+}{
+	// Bearer token
+	{regexp.MustCompile(`(?i)Bearer\s+[A-Za-z0-9\-_.]+`), "Bearer <REDACTED_TOKEN>"},
+	// Authorization header value
+	{regexp.MustCompile(`(?i)(authorization|auth)[=:\s]+[^\s]+`), "$1=<REDACTED_TOKEN>"},
+	// password=... veya password: ...
+	{regexp.MustCompile(`(?i)(password|passwd|pwd|secret|token|api[_-]?key)[=:\s]+[^\s]+`), "$1=<REDACTED>"},
+	// IPv4 adresleri (private range öncelikli ama hepsini maskele)
+	{regexp.MustCompile(`\b(?:10|172\.(?:1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.\d{1,3}\b`), "<REDACTED_IP>"},
+	// Generic IPv4
+	{regexp.MustCompile(`\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b`), "<REDACTED_IP>"},
+	// AWS ARN
+	{regexp.MustCompile(`arn:aws:[a-z0-9\-]+:[a-z0-9\-]*:\d+:[^\s]+`), "<REDACTED_ARN>"},
+}
+
+func maskSensitiveData(input string) string {
+	result := input
+	for _, mp := range maskPatterns {
+		result = mp.pattern.ReplaceAllString(result, mp.replacement)
+	}
+	return result
+}
+
+// ─── Araç & Dosya Tespiti ─────────────────────────────────────────────────────
+
 func detectToolByKeywords(query string, tools map[string]ToolMeta) string {
 	queryLower := strings.ToLower(query)
-	// Sorguyu kelimelere böl (noktalama temizle)
 	queryWords := strings.FieldsFunc(queryLower, func(r rune) bool {
 		return r == ' ' || r == '\'' || r == '"' || r == ',' || r == '.'
 	})
 
-	bestTool := "none"
-	bestScore := 0
+	best, bestScore := "none", 0
 
 	for _, meta := range tools {
 		score := 0
-		nameLower := strings.ToLower(meta.Name)
-
-		// Araç adının kendisi sorguda geçiyor mu?
-		if strings.Contains(queryLower, nameLower) {
+		if strings.Contains(queryLower, strings.ToLower(meta.Name)) {
 			score += 3
 		}
-
-		// Anahtar kelime eşleşmesi
 		for _, kw := range meta.Keywords {
 			kw = strings.TrimSpace(strings.ToLower(kw))
 			if kw == "" {
 				continue
 			}
-			// Tam kelime eşleşmesi
-			for _, word := range queryWords {
-				if word == kw {
+			for _, w := range queryWords {
+				if w == kw {
 					score += 2
 					break
 				}
 			}
-			// Kısmi eşleşme (sorgu keyword'ü içeriyor)
 			if strings.Contains(queryLower, kw) {
 				score += 1
 			}
 		}
-
 		if score > bestScore {
 			bestScore = score
-			bestTool = meta.Name
+			best = meta.Name
 		}
 	}
 
 	if bestScore == 0 {
 		return "none"
 	}
-	return bestTool
+	return best
 }
 
-// listKnowledgeFiles: ~/.term-ai/knowledge/*.txt dosyalarını okur,
-// # TANIM ve # ANAHTAR KELİMELER satırlarını parse eder.
-func listKnowledgeFiles() map[string]ToolMeta {
-	homeDir, _ := os.UserHomeDir()
-	dir := filepath.Join(homeDir, ".term-ai", "knowledge")
+func detectSubFileByKeywords(query string, meta ToolMeta) string {
+	if len(meta.SubFiles) == 0 {
+		return "general"
+	}
 
-	entries, err := os.ReadDir(dir)
+	queryLower := strings.ToLower(query)
+	queryWords := strings.FieldsFunc(queryLower, func(r rune) bool {
+		return r == ' ' || r == '\'' || r == '"' || r == ',' || r == '.'
+	})
+
+	best, bestScore := "general", 0
+
+	for fileName, keywordsRaw := range meta.SubFiles {
+		score := 0
+		for _, kw := range strings.Fields(keywordsRaw) {
+			kw = strings.TrimSpace(strings.ToLower(kw))
+			if kw == "" {
+				continue
+			}
+			for _, w := range queryWords {
+				if w == kw {
+					score += 2
+					break
+				}
+			}
+			if strings.Contains(queryLower, kw) {
+				score += 1
+			}
+		}
+		if score > bestScore {
+			bestScore = score
+			best = fileName
+		}
+	}
+
+	return best
+}
+
+func loadSubFileContext(meta ToolMeta, subFile string) string {
+	path := filepath.Join(meta.Dir, subFile+".txt")
+	content := tryReadFile(path)
+	if content != "" {
+		return content
+	}
+	return tryReadFile(filepath.Join(meta.Dir, "general.txt"))
+}
+
+// ─── Knowledge Yükleyici ─────────────────────────────────────────────────────
+
+func listTools() map[string]ToolMeta {
+	homeDir, _ := os.UserHomeDir()
+	base := filepath.Join(homeDir, ".term-ai", "knowledge")
+
+	entries, err := os.ReadDir(base)
 	if err != nil {
 		return map[string]ToolMeta{}
 	}
 
-	files := make(map[string]ToolMeta)
+	tools := make(map[string]ToolMeta)
+
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".txt") {
-			continue
-		}
-		name := strings.TrimSuffix(e.Name(), ".txt")
-		path := filepath.Join(dir, e.Name())
-		meta := ToolMeta{Name: name, FilePath: path}
-
-		content := tryReadFile(path)
-		for i, line := range strings.Split(content, "\n") {
-			if i >= 10 {
-				break
+		if e.IsDir() {
+			meta := loadToolMeta(filepath.Join(base, e.Name()), e.Name())
+			tools[e.Name()] = meta
+		} else if strings.HasSuffix(e.Name(), ".txt") {
+			// Geriye dönük uyumluluk: düz .txt
+			name := strings.TrimSuffix(e.Name(), ".txt")
+			path := filepath.Join(base, e.Name())
+			meta := ToolMeta{Name: name, Dir: base}
+			content := tryReadFile(path)
+			for i, line := range strings.Split(content, "\n") {
+				if i >= 10 {
+					break
+				}
+				line = strings.TrimSpace(line)
+				if strings.HasPrefix(line, "# TANIM:") {
+					meta.Description = strings.TrimSpace(strings.TrimPrefix(line, "# TANIM:"))
+				} else if strings.HasPrefix(line, "# ANAHTAR KELİMELER:") {
+					raw := strings.TrimSpace(strings.TrimPrefix(line, "# ANAHTAR KELİMELER:"))
+					meta.Keywords = strings.Split(raw, ",")
+				}
 			}
-			line = strings.TrimSpace(line)
-			if strings.HasPrefix(line, "# TANIM:") {
-				meta.Description = strings.TrimSpace(strings.TrimPrefix(line, "# TANIM:"))
-			} else if strings.HasPrefix(line, "# ANAHTAR KELİMELER:") {
-				raw := strings.TrimSpace(strings.TrimPrefix(line, "# ANAHTAR KELİMELER:"))
-				meta.Keywords = strings.Split(raw, ",")
-			}
+			tools[name] = meta
 		}
-
-		files[name] = meta
 	}
-	return files
+	return tools
 }
 
-func gatherAllGeneralSections(files map[string]ToolMeta) string {
+func loadToolMeta(dir, name string) ToolMeta {
+	meta := ToolMeta{Name: name, Dir: dir, SubFiles: make(map[string]string)}
+
+	content := tryReadFile(filepath.Join(dir, "_meta.txt"))
+	if content == "" {
+		return meta
+	}
+
+	for _, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "# TANIM:") {
+			meta.Description = strings.TrimSpace(strings.TrimPrefix(line, "# TANIM:"))
+		} else if strings.HasPrefix(line, "# ANAHTAR KELİMELER:") {
+			raw := strings.TrimSpace(strings.TrimPrefix(line, "# ANAHTAR KELİMELER:"))
+			meta.Keywords = strings.Split(raw, ",")
+		} else if strings.HasPrefix(line, "# DOSYALAR:") {
+			raw := strings.TrimSpace(strings.TrimPrefix(line, "# DOSYALAR:"))
+			for _, group := range strings.Split(raw, "|") {
+				group = strings.TrimSpace(group)
+				parts := strings.SplitN(group, "=", 2)
+				if len(parts) == 2 {
+					meta.SubFiles[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
+				}
+			}
+		}
+	}
+	return meta
+}
+
+func getSmartContext(baseCmd, subCmd string) string {
+	homeDir, _ := os.UserHomeDir()
+	base := filepath.Join(homeDir, ".term-ai", "knowledge")
+
+	toolDir := filepath.Join(base, baseCmd)
+	if info, err := os.Stat(toolDir); err == nil && info.IsDir() {
+		meta := loadToolMeta(toolDir, baseCmd)
+		subFile := detectSubFileByKeywords(subCmd, meta)
+		ctx := loadSubFileContext(meta, subFile)
+		if ctx != "" {
+			return ctx
+		}
+	}
+
+	content := tryReadFile(filepath.Join(base, baseCmd+".txt"))
+	if content == "" {
+		return ""
+	}
+	return extractSection(content, subCmd)
+}
+
+func gatherAllGeneralSections(tools map[string]ToolMeta) string {
 	var parts []string
-	for name, meta := range files {
-		content := tryReadFile(meta.FilePath)
+	for name, meta := range tools {
+		var content string
+		if meta.SubFiles != nil {
+			content = tryReadFile(filepath.Join(meta.Dir, "general.txt"))
+		}
 		if content == "" {
 			continue
 		}
@@ -437,7 +948,7 @@ Verilen görev için doğru terminal komutunu üret.
 Kurallar:
 1. Sadece komutu yaz. Açıklama, markdown veya backtick KULLANMA.
 2. Referans bilgideki flag ve kurallara kesinlikle uy. Listede olmayan flag uydurma.
-3. Bilinmesi gereken değerler (şifre, domain, IP vb.) için <PLACEHOLDER> formatını kullan.
+3. Bilinmesi gereken değerler (şifre, domain, IP) için <PLACEHOLDER> formatını kullan.
 
 %s--- GÖREV ---
 %s
@@ -507,50 +1018,7 @@ func runCommand(cmd string) {
 	}
 }
 
-// ─── Ollama ───────────────────────────────────────────────────────────────────
-
-func askOllama(ollamaURL, model, prompt string, numPredict int) string {
-	reqBody := OllamaRequest{
-		Model:  model,
-		Prompt: prompt,
-		Stream: false,
-		Options: map[string]interface{}{
-			"temperature": 0.1,
-			"num_predict": numPredict,
-			"stop":        []string{"\n\n", "---"},
-		},
-	}
-
-	jsonData, _ := json.Marshal(reqBody)
-	client := &http.Client{Timeout: 90 * time.Second}
-
-	resp, err := client.Post(ollamaURL, "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Printf("❌ Ollama'ya ulaşılamadı (%s)\n", ollamaURL)
-		fmt.Println("   → 'ollama serve' çalışıyor mu?")
-		fmt.Printf("   → Model kurulu mu? 'ollama pull %s'\n", model)
-		os.Exit(1)
-	}
-	defer resp.Body.Close()
-
-	var chunk OllamaResponse
-	if err := json.NewDecoder(resp.Body).Decode(&chunk); err != nil {
-		return ""
-	}
-	return chunk.Response
-}
-
-// ─── Context (Akıllı Grep) ───────────────────────────────────────────────────
-
-func getSmartContext(baseCmd, subCmd string) string {
-	homeDir, _ := os.UserHomeDir()
-	dir := filepath.Join(homeDir, ".term-ai", "knowledge")
-	content := tryReadFile(filepath.Join(dir, baseCmd+".txt"))
-	if content == "" {
-		return ""
-	}
-	return extractSection(content, subCmd)
-}
+// ─── Dosya Okuyucular ─────────────────────────────────────────────────────────
 
 func tryReadFile(path string) string {
 	data, err := os.ReadFile(path)
@@ -563,7 +1031,6 @@ func tryReadFile(path string) string {
 func extractSection(fileContent, subCmd string) string {
 	headerRe := regexp.MustCompile(`(?m)^\[([^\]]+)\]\s*$`)
 	headers := headerRe.FindAllStringSubmatchIndex(fileContent, -1)
-
 	if len(headers) == 0 {
 		return strings.TrimSpace(fileContent)
 	}
@@ -606,7 +1073,6 @@ func loadConfig() Config {
 	defaults := Config{
 		OllamaURL: defaultOllamaURL,
 		Model:     defaultModel,
-		NLModel:   "",
 		Language:  "tr",
 		MaxTokens: 150,
 	}
@@ -625,29 +1091,44 @@ func loadConfig() Config {
 	if cfg.Model == "" { cfg.Model = defaults.Model }
 	if cfg.Language == "" { cfg.Language = defaults.Language }
 	if cfg.MaxTokens == 0 { cfg.MaxTokens = defaults.MaxTokens }
-
 	return cfg
 }
 
 func showConfig() {
 	cfg := loadConfig()
 	fmt.Printf("📋 Config: %s\n\n", filepath.Join(termAIDir(), configFile))
-	fmt.Printf("  model:      %s  (fix modu)\n", cfg.Model)
-	nlModel := cfg.NLModel
-	if nlModel == "" {
-		nlModel = cfg.Model + "  (nl_model ayarlanmamış, model kullanılıyor)"
+	fmt.Printf("  ── Local ──────────────────────────\n")
+	fmt.Printf("  model:          %s\n", cfg.Model)
+	nlm := cfg.NLModel
+	if nlm == "" { nlm = "(model kullanılıyor)" }
+	fmt.Printf("  nl_model:       %s\n", nlm)
+	fmt.Printf("  ollama_url:     %s\n", cfg.OllamaURL)
+	fmt.Printf("\n  ── Cloud ──────────────────────────\n")
+	provider := cfg.CloudProvider
+	if provider == "" { provider = "(ayarlanmamış)" }
+	fmt.Printf("  cloud_provider: %s\n", provider)
+	cm := cfg.CloudModel
+	if cm == "" { cm = "(varsayılan)" }
+	fmt.Printf("  cloud_model:    %s\n", cm)
+	key := cfg.CloudAPIKey
+	if key != "" {
+		key = key[:min(8, len(key))] + "..."
+	} else {
+		key = "(ayarlanmamış)"
 	}
-	fmt.Printf("  nl_model:   %s  (NL modu komut üretimi)\n", nlModel)
-	fmt.Printf("  ollama_url: %s\n", cfg.OllamaURL)
-	fmt.Printf("  language:   %s\n", cfg.Language)
-	fmt.Printf("\nDeğiştirmek için dosyayı düzenleyin.\n")
+	fmt.Printf("  cloud_api_key:  %s\n", key)
+	fmt.Printf("\n  language:       %s\n", cfg.Language)
+	fmt.Printf("\nDüzenlemek için: %s\n", filepath.Join(termAIDir(), configFile))
+}
+
+func min(a, b int) int {
+	if a < b { return a }
+	return b
 }
 
 // ─── Geçmiş ───────────────────────────────────────────────────────────────────
 
-func historyPath() string {
-	return filepath.Join(termAIDir(), historyFile)
-}
+func historyPath() string { return filepath.Join(termAIDir(), historyFile) }
 
 func loadHistory() []HistoryEntry {
 	data, err := os.ReadFile(historyPath())
@@ -694,20 +1175,19 @@ func showHistory() {
 	fmt.Printf("📜 Son %d kayıt:\n\n", len(entries[start:]))
 	for _, e := range entries[start:] {
 		status := "⬜"
-		if e.Executed {
-			status = "✅"
-		}
-		modeIcon := "🔧"
-		if e.Mode == "nl" {
-			modeIcon = "🧠"
-		}
+		if e.Executed { status = "✅" }
+		icon := "🔧"
+		if e.Mode == "nl" { icon = "🧠" }
+		if e.Mode == "chat" { icon = "💬" }
+		backendIcon := "💻"
+		if e.Backend == "cloud" { backendIcon = "☁️" }
 		t, _ := time.Parse(time.RFC3339, e.Timestamp)
-		fmt.Printf("%s %s [%s] %s\n   → %s\n\n",
-			status, modeIcon, t.Format("02 Jan 15:04"), e.Command, e.Suggestion)
+		fmt.Printf("%s %s %s [%s] %s\n   → %s\n\n",
+			status, icon, backendIcon, t.Format("02 Jan 15:04"), e.Command, e.Suggestion)
 	}
 }
 
-// ─── Yardım & Model Listesi ───────────────────────────────────────────────────
+// ─── Yardım ───────────────────────────────────────────────────────────────────
 
 func showHelp() {
 	fmt.Println(`🤖 term-ai — Terminal için AI Asistan
@@ -718,23 +1198,21 @@ Kullanım:
   term-ai --history                Son önerileri göster
   term-ai --config                 Mevcut ayarları göster
   term-ai --models                 Kurulu Ollama modellerini listele
-  term-ai --help                   Bu yardım mesajı
+  term-ai --no-history <komut>     Geçmişi atla (okuma + kaydetme yok)
+  term-ai --cloud <sorgu>          Cloud API kullan (local yerine)
+  term-ai --chat "<soru>"          Serbest sohbet modu (komut üretme yok)
 
-FIX modu örnekleri:
+FIX modu:
   term-ai git psuh origin main
-  term-ai kubectl get pods -n producton
-  term-ai docker-compose up -d --buld
+  term-ai --cloud kubectl get pods -n producton    ← cloud ile
 
-NL modu örnekleri:
+NL modu:
   term-ai "instana backendi production modda ayağa kaldır"
-  term-ai "ahmet@sirket.com kullanıcısının 2fa'sını sıfırla"
-  term-ai instana object dizinini değiştir   ← tırnaksız da çalışır
+  term-ai --cloud "karmaşık bir bash scripti yaz"  ← cloud ile
 
-NL modu için küçük model ayarı (~/.term-ai/config.json):
-  "nl_model": "gemma3:1b"   ← araç tespiti modelsiz, komut üretimi bu modelle
-
-Ayarlar: ~/.term-ai/config.json
-Bilgi deposu: ~/.term-ai/knowledge/<komut>.txt`)
+Config (~/.term-ai/config.json):
+  local:  model, nl_model, ollama_url
+  cloud:  cloud_provider (anthropic|gemini|openai), cloud_api_key, cloud_model`)
 }
 
 func showAvailableModels() {
@@ -743,14 +1221,16 @@ func showAvailableModels() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		fmt.Println("❌ 'ollama list' çalıştırılamadı. Ollama kurulu ve çalışıyor mu?")
+		fmt.Println("❌ 'ollama list' çalıştırılamadı.")
 	}
-	fmt.Printf("\nfix modu için (config: \"model\"):\n")
-	fmt.Printf("  %-30s %s\n", "qwen2.5-coder:7b", "(varsayılan, ~5GB)")
-	fmt.Printf("  %-30s %s\n", "qwen2.5-coder:14b", "(daha güçlü, ~9GB)")
-	fmt.Printf("\nNL modu için (config: \"nl_model\") — hız öncelikli:\n")
-	fmt.Printf("  %-30s %s\n", "gemma3:1b", "(en hızlı, ~800MB) ← önerilir")
-	fmt.Printf("  %-30s %s\n", "qwen2.5:0.5b", "(çok küçük, ~400MB)")
-	fmt.Printf("  %-30s %s\n", "gemma3:4b", "(dengeli, ~3GB)")
-	fmt.Printf("\nKurmak için: ollama pull <model-adı>\n")
+	fmt.Printf("\nLocal fix modu (\"model\"):\n")
+	fmt.Printf("  %-28s %s\n", "qwen2.5-coder:7b", "~5GB, önerilir")
+	fmt.Printf("  %-28s %s\n", "qwen2.5-coder:14b", "~9GB, daha güçlü")
+	fmt.Printf("\nLocal NL modu (\"nl_model\"):\n")
+	fmt.Printf("  %-28s %s\n", "gemma3:1b", "~800MB ← önerilir")
+	fmt.Printf("  %-28s %s\n", "gemma3:4b", "~3GB, daha kaliteli")
+	fmt.Printf("\nCloud (\"cloud_provider\" + \"cloud_api_key\"):\n")
+	fmt.Printf("  %-28s %s\n", "anthropic → claude-haiku-4-5", "hızlı, ucuz")
+	fmt.Printf("  %-28s %s\n", "gemini → gemini-2.0-flash", "ücretsiz tier var")
+	fmt.Printf("  %-28s %s\n", "openai → gpt-4o-mini", "dengeli")
 }

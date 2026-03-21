@@ -1,0 +1,3 @@
+# git — Remove or untrack files
+Stop tracking a file but keep it locally: git rm --cached <file>
+Delete file from repo and locally: git rm <file>

@@ -16,5 +16,14 @@
     "executed": false,
     "mode": "nl",
     "backend": "local"
+  },
+  {
+    "timestamp": "2026-03-21T14:26:16+03:00",
+    "command": "git psuh",
+    "error_output": "git: 'psuh' is not a git command. See 'git --help'.\n\nThe most similar command is\n\tpush",
+    "suggestion": "git push",
+    "executed": true,
+    "mode": "fix",
+    "backend": "local"
   }
 ]

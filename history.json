@@ -7,5 +7,14 @@
     "executed": false,
     "mode": "chat",
     "backend": "cloud"
+  },
+  {
+    "timestamp": "2026-03-21T13:37:45+03:00",
+    "command": "stanctl ile internetsiz ortam için kurulum paketi oluştur, cache kapalı olsun ve bir dizine kaydet",
+    "error_output": "",
+    "suggestion": "stanctl air-gapped package --no-cache -o /path/to/output/directory",
+    "executed": false,
+    "mode": "nl",
+    "backend": "local"
   }
 ]

@@ -1,8 +1,8 @@
-# git — Pull ve fetch işlemleri
+# git — Pull and fetch operations
 
-Pull (merge): git pull origin <branch>
-Pull (rebase): git pull --rebase origin <branch>
-Çakışma varsa: git rebase --continue veya git rebase --abort
-Sadece fetch (birleştirme): git fetch origin
-Tüm remote'ları fetch: git fetch --all
-Silinmiş remote branch'leri temizle: git fetch --prune
+Pull with merge: git pull origin <branch>
+Pull with rebase: git pull --rebase origin <branch>
+After conflicts: git rebase --continue or git rebase --abort
+Fetch only (no merge): git fetch origin
+Fetch all remotes: git fetch --all
+Clean up deleted remote branches: git fetch --prune

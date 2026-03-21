@@ -1,54 +1,54 @@
-# stanctl — Cluster yönetimi (up, down, create, delete, backup, restore)
+# stanctl — Cluster management (up, down, create, delete, backup, restore)
 
 [up]
-Cluster'ı oluşturur veya durdurulmuş cluster'ı başlatır.
-Kullanım: stanctl up [flags]
-Zorunlu (ilk kurulumda): --core-base-domain, --download-key, --sales-key, --unit-tenant-name, --unit-unit-name, --unit-initial-admin-password, --unit-agent-key
+Creates the cluster or starts a stopped cluster.
+Usage: stanctl up [flags]
+Required (initial setup): --core-base-domain, --download-key, --sales-key, --unit-tenant-name, --unit-unit-name, --unit-initial-admin-password, --unit-agent-key
 Install type: --install-type demo | production
-TLS otomatik: --core-tls-generate-cert
-TLS manuel: --core-tls-crt <dosya> --core-tls-key <dosya>
-Air-gapped: --air-gapped
-Upgrade atla: --force-auto-upgrade
-Preflight atla: --skip-preflight-check
-Cluster oluşturma atla (sadece backend güncelle): --skip-cluster-creation
-Single→multi-node geçiş: --multi-node-migrate --multi-node-enable --multi-node-ips <ip'ler>
+Automatic TLS: --core-tls-generate-cert
+Manual TLS: --core-tls-crt <file> --core-tls-key <file>
+Air-gapped mode: --air-gapped
+Skip upgrade prompt: --force-auto-upgrade
+Skip preflight check: --skip-preflight-check
+Skip cluster creation (update backend only): --skip-cluster-creation
+Single→multi-node migration: --multi-node-migrate --multi-node-enable --multi-node-ips <ips>
 Multi-node: --multi-node-enable --multi-node-ips 192.168.1.1,192.168.1.2,192.168.1.3
-HPA kapatmak: --core-enable-hpa=false
-Volume dizinleri değiştirmek:
-  --volume-data <yol>        (varsayılan: /mnt/instana/stanctl/data)
-  --volume-metrics <yol>     (varsayılan: /mnt/instana/stanctl/metrics)
-  --volume-analytics <yol>   (varsayılan: /mnt/instana/stanctl/analytics)
-  --volume-objects <yol>     (varsayılan: /mnt/instana/stanctl/objects)
+Disable HPA: --core-enable-hpa=false
+Override volume directories:
+  --volume-data <path>        (default: /mnt/instana/stanctl/data)
+  --volume-metrics <path>     (default: /mnt/instana/stanctl/metrics)
+  --volume-analytics <path>   (default: /mnt/instana/stanctl/analytics)
+  --volume-objects <path>     (default: /mnt/instana/stanctl/objects)
 Proxy: --core-proxy-host, --core-proxy-port, --core-proxy-user, --core-proxy-password
 SMTP: --core-smtp-host, --core-smtp-port (587), --core-smtp-from, --core-smtp-user, --core-smtp-password
 
 [down]
-Cluster'ı durdurur. Container ve network temizlenir, veri silinmez.
-Kullanım: stanctl down
-Global flagler geçerli (-q, -d, -t).
+Shuts down the cluster. Cleans up containers and networking. Data is not deleted.
+Usage: stanctl down
+Global flags apply (-q, -d, -t).
 
 [cluster-create]
-Sadece K8s cluster'ını oluşturur (backend kurmaz).
-Kullanım: stanctl cluster create [flags]
+Creates only the K8s cluster (does not install backend).
+Usage: stanctl cluster create [flags]
 Alias: stanctl cl c
 Multi-node: --multi-node-enable --multi-node-ips <ip1,ip2,ip3>
-Air-gapped: --air-gapped --cluster-data-dir <dizin>
-Preflight atla: --skip-preflight-check
+Air-gapped: --air-gapped --cluster-data-dir <dir>
+Skip preflight: --skip-preflight-check
 
 [cluster-delete]
-K8s cluster'ını siler.
-Kullanım: stanctl cluster delete [--keep-data]
+Deletes the K8s cluster. Also deletes data by default.
+Usage: stanctl cluster delete [--keep-data]
 Alias: stanctl cl delete | del | rm | d
-Veriyi korumak için: --keep-data
+Preserve data: --keep-data
 
 [cluster-backup]
-Cluster'ı yedekler.
-Kullanım: stanctl cluster backup [-o <dizin>]
-Çıktı dizini: -o, --output-dir (varsayılan: mevcut dizin)
+Backs up the cluster.
+Usage: stanctl cluster backup [-o <dir>]
+Output directory: -o, --output-dir (default: current directory)
 
 [cluster-restore]
-Cluster'ı yedekten geri yükler.
-Kullanım: stanctl cluster restore -f <backup-dosyası> [flags]
-Zorunlu: -f, --file <backup-dosyası>
-Multi-node restore: --multi-node-enable --multi-node-ips <ip'ler>
-Air-gapped: --air-gapped --cluster-data-dir <dizin>
+Restores the cluster from a backup.
+Usage: stanctl cluster restore -f <backup-file> [flags]
+Required: -f, --file <backup-archive>
+Multi-node restore: --multi-node-enable --multi-node-ips <ips>
+Air-gapped: --air-gapped --cluster-data-dir <dir>

@@ -1,15 +1,15 @@
-# git — Remote ve tag işlemleri
+# git — Remote and tag operations
 
-Remote listele: git remote -v
-Remote ekle: git remote add origin <url>
-Remote URL değiştir: git remote set-url origin <url>
-Remote sil: git remote remove <isim>
-Remote yeniden adlandır: git remote rename <eski> <yeni>
+List remotes: git remote -v
+Add remote: git remote add origin <url>
+Change remote URL: git remote set-url origin <url>
+Remove remote: git remote remove <name>
+Rename remote: git remote rename <old> <new>
 
-Tag oluştur (annotated): git tag -a v1.0.0 -m "sürüm 1.0.0"
-Tag oluştur (lightweight): git tag v1.0.0
-Tag listele: git tag -l
-Tag sil (local): git tag -d v1.0.0
-Remote tag sil: git push origin --delete v1.0.0
-Tag push: git push origin v1.0.0
-Tüm tagleri push: git push origin --tags
+Create annotated tag: git tag -a v1.0.0 -m "version 1.0.0"
+Create lightweight tag: git tag v1.0.0
+List tags: git tag -l
+Delete local tag: git tag -d v1.0.0
+Delete remote tag: git push origin --delete v1.0.0
+Push tag: git push origin v1.0.0
+Push all tags: git push origin --tags

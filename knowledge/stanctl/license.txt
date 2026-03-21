@@ -1,0 +1,17 @@
+# stanctl — License management
+
+[license-download]
+Downloads the Instana license file.
+Usage: stanctl license download [--sales-key <key>] [-o <dir>]
+Alias: stanctl lc
+Output: -o, --output-dir (default: /root/.stanctl/license.json)
+
+[license-info]
+Displays information about the current license validity.
+Usage: stanctl license info
+
+[license-update]
+Updates the license, download key, and sales key.
+Usage: stanctl license update [flags]
+Online: --download-key and/or --sales-key
+Air-gapped (from file): -f, --file <license-file>

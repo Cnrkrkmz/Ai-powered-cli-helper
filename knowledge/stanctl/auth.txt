@@ -1,20 +1,20 @@
-# stanctl — Kimlik doğrulama yönetimi
+# stanctl — Authentication management
 
 [create-admin-api-token]
-Admin API token oluşturur.
-Kullanım: stanctl auth create-admin-api-token
+Creates an admin API token.
+Usage: stanctl auth create-admin-api-token
 
 [reset-2fa]
-Kullanıcının iki faktörlü kimlik doğrulamasını sıfırlar.
-Kullanım: stanctl auth reset-2fa -e <email>
-Zorunlu: -e, --email <kullanıcı-email>
+Resets two-factor authentication for a user.
+Usage: stanctl auth reset-2fa -e <email>
+Required: -e, --email <user-email>
 
 [reset-idp]
-IDP yapılandırmasını sıfırlar, Instana dahili kullanıcı yönetimine döner.
-Kullanım: stanctl auth reset-idp
+Resets the IDP configuration. Switches back to Instana's internal user management.
+Usage: stanctl auth reset-idp
 
 [reset-password]
-Kullanıcı şifresini sıfırlar. Şifre verilmezse interaktif sorulur.
-Kullanım: stanctl auth reset-password -e <email> [-p <yeni-şifre>]
-Zorunlu: -e, --email <email>
-Opsiyonel: -p, --password <yeni-şifre>
+Resets a user's password. If not provided via flag, it will be prompted interactively.
+Usage: stanctl auth reset-password -e <email> [-p <new-password>]
+Required: -e, --email <email>
+Optional: -p, --password <new-password>

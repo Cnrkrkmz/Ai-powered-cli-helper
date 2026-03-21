@@ -1,36 +1,36 @@
-# stanctl — Backend ve datastore yönetimi
+# stanctl — Backend and datastore management
 
 [backend-apply]
-Instana backend'i kurar veya günceller (cluster zaten ayaktaysa kullan).
-Kullanım: stanctl backend apply [flags]
+Installs or updates the Instana backend (use when cluster is already running).
+Usage: stanctl backend apply [flags]
 Alias: stanctl be a
-up komutundaki tüm --core-* ve --unit-* flagler burada da geçerli.
+All --core-* and --unit-* flags from the up command are also valid here.
 Dry run: --dry-run
-Preflight atla: --skip-preflight-check
+Skip preflight: --skip-preflight-check
 Air-gapped: --air-gapped
-Temel flagler:
+Key flags:
   --core-base-domain <domain>
   --download-key <key>
   --install-type demo | production
-  --instana-release <sayı> VEYA --instana-version <versiyon> (ikisi birden kullanılmaz)
+  --instana-release <number> OR --instana-version <version> (mutually exclusive)
 
 [datastores-apply]
-Datastore'ları kurar veya günceller.
-Kullanım: stanctl datastores apply [flags]
+Installs or updates datastores used by Instana.
+Usage: stanctl datastores apply [flags]
 Alias: stanctl ds a
-Belirli datastore: -i cassandra | elasticsearch | kafka | clickhouse | postgres | beeinstana
-Birden fazla: stanctl datastores apply -i cassandra -i kafka
-Her datastore için flag formatı: --<isim>-user, --<isim>-password, --<isim>-admin-user, --<isim>-admin-password
-Belirtilmezse şifreler otomatik üretilir.
+Specific datastore: -i cassandra | elasticsearch | kafka | clickhouse | postgres | beeinstana
+Multiple: stanctl datastores apply -i cassandra -i kafka
+Flag format per datastore: --<name>-user, --<name>-password, --<name>-admin-user, --<name>-admin-password
+Passwords are auto-generated if not provided.
 Air-gapped: --air-gapped
-Dry run: --dry-run (global flag olarak)
+Dry run: --dry-run (global flag)
 
 [migrate]
-Self-Hosted Classic edition'dan veri göçü.
-Kullanım: stanctl migrate -f <arsiv-dosyası> [flags]
+Migrates data from Self-Hosted Classic edition.
+Usage: stanctl migrate -f <archive-file> [flags]
 Alias: stanctl mg
-Zorunlu: -f, --file <migrasyon-arsivi>
+Required: -f, --file <migration-archive>
 Install type: --install-type demo | production
-Sürüm: --instana-release VEYA --instana-version
-Multi-node: --multi-node-enable --multi-node-ips <ip'ler>
-Volume dizinleri: --volume-data, --volume-metrics, --volume-analytics, --volume-objects
+Version: --instana-release OR --instana-version
+Multi-node: --multi-node-enable --multi-node-ips <ips>
+Volume paths: --volume-data, --volume-metrics, --volume-analytics, --volume-objects

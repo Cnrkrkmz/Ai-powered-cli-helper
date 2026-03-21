@@ -1,11 +1,11 @@
-# git — Branch işlemleri
+# git — Branch operations
 
-Tüm branchleri listele: git branch -a
-Branch oluştur: git branch <isim>
-Branch oluştur ve geç: git checkout -b <isim>  veya  git switch -c <isim>
-Branch değiştir: git checkout <isim>  veya  git switch <isim>
-Branch sil (birleştirilmiş): git branch -d <isim>
-Branch zorla sil: git branch -D <isim>
-Remote branch sil: git push origin --delete <isim>
-Branch yeniden adlandır: git branch -m <eski> <yeni>
-Mevcut branch adlandır: git branch -m <yeni-isim>
+List all branches: git branch -a
+Create branch: git branch <name>
+Create and switch: git checkout -b <name>  or  git switch -c <name>
+Switch branch: git checkout <name>  or  git switch <name>
+Delete branch (merged): git branch -d <name>
+Force delete branch: git branch -D <name>
+Delete remote branch: git push origin --delete <name>
+Rename branch: git branch -m <old> <new>
+Rename current branch: git branch -m <new-name>

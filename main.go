@@ -114,6 +114,9 @@ func main() {
 		case "--models":
 			showAvailableModels()
 			return
+		case "--index":
+			runIndex(loadConfig(), true)
+			return
 		}
 	}
 
@@ -280,23 +283,46 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 		os.Exit(1)
 	}
 
-	// ── Adım 1: Araç tespiti (modelsiz) ──────────────────────────────────────
-	fmt.Printf("🔍 Araç tespiti yapılıyor...\n")
+	// ── Adım 1: Araç + dosya tespiti (vektör önce, keyword fallback) ──────────
+	fmt.Printf("🔍 Arama yapılıyor...\n")
 	t0 := time.Now()
-	detectedTool := detectToolByKeywords(query, tools)
-	t1 := time.Since(t0)
-	fmt.Printf("   → araç: \"%s\" (%.0fms)\n", detectedTool, float64(t1.Microseconds())/1000)
 
-	// ── Adım 2: Alt dosya tespiti (modelsiz) ─────────────────────────────────
+	detectedTool := "none"
+	subFile := "general"
+	searchMethod := "keyword"
+
+	// Önce vektör arama dene (index mevcutsa ve güncelsse)
+	if !IsIndexStale(cfg.OllamaURL) {
+		result := SearchSimilar(cfg.OllamaURL, query)
+		if result.Tool != "none" {
+			detectedTool = result.Tool
+			subFile = result.SubFile
+			searchMethod = fmt.Sprintf("vektör (%.2f)", result.Score)
+		}
+	}
+
+	// Vektör başarısızsa keyword'e düş
+	if detectedTool == "none" {
+		detectedTool = detectToolByKeywords(query, tools)
+		if detectedTool != "none" {
+			meta := tools[detectedTool]
+			subFile = detectSubFileByKeywords(query, meta)
+		}
+	}
+
+	t1 := time.Since(t0)
+	if detectedTool != "none" {
+		fmt.Printf("   → %s/%s [%s] (%.0fms)\n\n",
+			detectedTool, subFile, searchMethod, float64(t1.Microseconds())/1000)
+	} else {
+		fmt.Printf("   → eşleşme bulunamadı, genel context kullanılıyor\n\n")
+	}
+
+	// ── Adım 2: Context yükle ─────────────────────────────────────────────────
 	var toolContext string
-	var subFile string
 	if detectedTool != "none" {
 		meta := tools[detectedTool]
-		subFile = detectSubFileByKeywords(query, meta)
-		fmt.Printf("   → dosya:  \"%s/%s\"\n\n", detectedTool, subFile)
 		toolContext = loadSubFileContext(meta, subFile)
-	} else {
-		fmt.Printf("\n")
 	}
 	if toolContext == "" {
 		toolContext = gatherAllGeneralSections(tools)
@@ -1187,6 +1213,22 @@ func showHistory() {
 	}
 }
 
+// ─── Index ─────────────────────────────────────────────────────────────────────────────
+
+func runIndex(cfg Config, verbose bool) {
+	if verbose {
+		fmt.Printf("📦 Knowledge index’leniyor...\n")
+		fmt.Printf("   Model: %s\n", defaultEmbedModel)
+		fmt.Printf("   Ollama: %s\n\n", cfg.OllamaURL)
+		fmt.Printf("   ℹ️  Yoksa kur: ollama pull %s\n\n", defaultEmbedModel)
+	}
+
+	if err := IndexKnowledge(cfg.OllamaURL, verbose); err != nil {
+		fmt.Printf("\n❌ Index hatası: %v\n", err)
+		os.Exit(1)
+	}
+}
+
 // ─── Yardım ───────────────────────────────────────────────────────────────────
 
 func showHelp() {
@@ -1198,6 +1240,7 @@ Kullanım:
   term-ai --history                Son önerileri göster
   term-ai --config                 Mevcut ayarları göster
   term-ai --models                 Kurulu Ollama modellerini listele
+  term-ai --index                  Knowledge dosyalarını vektörize et
   term-ai --no-history <komut>     Geçmişi atla (okuma + kaydetme yok)
   term-ai --cloud <sorgu>          Cloud API kullan (local yerine)
   term-ai --chat "<soru>"          Serbest sohbet modu (komut üretme yok)

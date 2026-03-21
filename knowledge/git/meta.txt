@@ -1,3 +1,0 @@
-# TANIM: Git versiyon kontrol sistemi komutları
-# ANAHTAR KELİMELER: git, commit, push, pull, branch, merge, rebase, clone, stash, tag, remote, checkout, diff, log, reset
-# DOSYALAR: commit=commit ekle mesaj stage | push=push yükle gönder uzak remote | pull=pull çek güncelle fetch indir | branch=branch dal oluştur sil listele değiştir | merge=merge birleştir | rebase=rebase | stash=stash geçici sakla | log=log geçmiş tarih | reset=reset geri al iptal | tag=tag etiket sürüm | remote=remote uzak repo | diff=diff fark karşılaştır

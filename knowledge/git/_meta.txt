@@ -1,0 +1,3 @@
+# DESCRIPTION: Git version control system commands
+# KEYWORDS: git, commit, push, pull, branch, merge, rebase, clone, stash, tag, remote, checkout, diff, log, reset, undo, history
+# FILES: commit=commit add stage message amend | push=push upload send remote origin | pull=pull fetch update download sync | branch=branch create delete list switch rename | merge=merge combine join squash | rebase=rebase interactive | stash=stash save temporary hide | log=log history timeline author | reset=reset undo revert discard rollback | tag=tag version release label | remote=remote origin url repository | diff=diff compare difference changes

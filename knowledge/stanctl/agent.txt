@@ -1,19 +1,19 @@
-# stanctl — Self-monitoring agent yönetimi
+# stanctl — Self-monitoring agent management
 
 [agent-apply]
-Self-monitoring agent'ı kurar veya günceller.
-Kullanım: stanctl agent apply [flags]
+Installs or updates the Instana self-monitoring agent.
+Usage: stanctl agent apply [flags]
 Alias: stanctl ag a
-Mod: --agent-mode INFRASTRUCTURE | APM | AWS (varsayılan: INFRASTRUCTURE)
+Mode: --agent-mode INFRASTRUCTURE | APM | AWS (default: INFRASTRUCTURE)
 Endpoint: --agent-endpoint-host, --agent-endpoint-port (443)
 Key: --agent-key
-Zone/Cluster adı: --agent-zone-name (instana), --agent-cluster-name (instana)
+Zone/Cluster name: --agent-zone-name (instana), --agent-cluster-name (instana)
 Proxy: --agent-proxy-host, --agent-proxy-port (80), --agent-proxy-protocol (http|https)
-         --agent-proxy-username, --agent-proxy-password, --agent-proxy-use-dns
+       --agent-proxy-username, --agent-proxy-password, --agent-proxy-use-dns
 Static image: --agent-use-static-image
 Dry run: --dry-run
 
 [agent-delete]
-Self-monitoring agent'ı siler.
-Kullanım: stanctl agent delete
+Deletes the self-monitoring agent.
+Usage: stanctl agent delete
 Alias: stanctl ag delete | del | rm | d

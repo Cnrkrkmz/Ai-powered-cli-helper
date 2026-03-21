@@ -1,10 +1,10 @@
-# git — Log ve geçmiş
+# git — Log and history
 
-Kısa log: git log --oneline -20
-Grafik: git log --oneline --graph --all
-Dosya geçmişi: git log --follow -p -- <dosya>
-Yazar filtresi: git log --author="İsim"
-Tarih filtresi: git log --since="2024-01-01" --until="2024-12-31"
-Commit ara: git log --grep="arama"
-Değişiklik içeriğinde ara: git log -S "aranan-kod"
-Belirli dosya: git log --oneline -- <dosya>
+Short log: git log --oneline -20
+Graph view: git log --oneline --graph --all
+File history: git log --follow -p -- <file>
+Filter by author: git log --author="Name"
+Filter by date: git log --since="2024-01-01" --until="2024-12-31"
+Search commit messages: git log --grep="search"
+Search code changes: git log -S "search-string"
+Specific file: git log --oneline -- <file>

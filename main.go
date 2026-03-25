@@ -368,18 +368,25 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 
 	fmt.Printf("\n▶ Önerilen Komut: %s\n", suggestedCmd)
 	fmt.Printf("▶ Toplam süre: %.1fs | %s/%s\n", (t1 + t3).Seconds(), backend, model)
+	
+	// Placeholder kontrolü ve düzenleme seçeneği
+	finalCmd, wasEdited := askToEdit(suggestedCmd)
+	if wasEdited {
+		fmt.Printf("▶ Düzenlenmiş Komut: %s\n", finalCmd)
+	}
+	
 	fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
 
 	executed := false
 	if readYesNo() {
 		executed = true
-		runCommand(suggestedCmd)
+		runCommand(finalCmd)
 		
-		// Başarılı komutları training data'ya ekle
+		// Başarılı komutları training data'ya ekle (düzenlenmiş versiyonu kaydet)
 		if detectedTool == "none" {
 			detectedTool = "general"
 		}
-		addApprovedCommand(query, suggestedCmd, detectedTool)
+		addApprovedCommand(query, finalCmd, detectedTool)
 		fmt.Println("✅ Komut training data'ya eklendi")
 	} else {
 		fmt.Println("İptal edildi.")
@@ -389,7 +396,7 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 		saveHistory(HistoryEntry{
 			Timestamp:  time.Now().Format(time.RFC3339),
 			Command:    query,
-			Suggestion: suggestedCmd,
+			Suggestion: finalCmd, // Düzenlenmiş komutu kaydet
 			Executed:   executed,
 			Mode:       "nl",
 			Backend:    backend,
@@ -1025,6 +1032,62 @@ func cleanResponse(raw string) string {
 		}
 	}
 	return ""
+}
+
+// ─── Command Editing ──────────────────────────────────────────────────────────
+
+func hasPlaceholders(cmd string) bool {
+	// Detect common placeholder patterns
+	placeholderPatterns := []string{
+		"<", ">",           // <file>, <path>
+		"[", "]",           // [option]
+		"{", "}",           // {value}
+		"...",              // ellipsis
+		"YOUR_",            // YOUR_API_KEY
+		"REPLACE_",         // REPLACE_THIS
+	}
+	
+	for _, pattern := range placeholderPatterns {
+		if strings.Contains(cmd, pattern) {
+			return true
+		}
+	}
+	return false
+}
+
+func editCommand(originalCmd string) string {
+	fmt.Printf("\n📝 Komutu düzenle (Enter = değiştirme, Ctrl+C = iptal):\n")
+	fmt.Printf("   Orijinal: %s\n", originalCmd)
+	fmt.Printf("   Yeni:     ")
+	
+	reader := bufio.NewReader(os.Stdin)
+	edited, err := reader.ReadString('\n')
+	if err != nil {
+		return originalCmd
+	}
+	
+	edited = strings.TrimSpace(edited)
+	if edited == "" {
+		return originalCmd
+	}
+	
+	return edited
+}
+
+func askToEdit(cmd string) (string, bool) {
+	if !hasPlaceholders(cmd) {
+		return cmd, false
+	}
+	
+	fmt.Printf("\n⚠️  Komutta placeholder tespit edildi: %s\n", cmd)
+	fmt.Printf("▶ Düzenlemek ister misin? [e/h]: ")
+	
+	if readYesNo() {
+		edited := editCommand(cmd)
+		return edited, true
+	}
+	
+	return cmd, false
 }
 
 func isDangerous(cmd string) bool {

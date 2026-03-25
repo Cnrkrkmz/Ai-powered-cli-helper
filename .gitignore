@@ -1,7 +1,9 @@
 config.json
 embeddings.json
 history.json
-IMPORVEMENT_PLAN.md
+training_data.json
+IMPROVEMENT_PLAN.md
+TRAINING_DATA_COLLECTION.md
 # Dataset files
 nl2bash_data.txt
 nl2bash_pairs.txt

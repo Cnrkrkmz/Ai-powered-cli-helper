@@ -22,6 +22,7 @@ const (
 	defaultModel      = "qwen2.5-coder:7b"
 	historyFile       = "history.json"
 	configFile        = "config.json"
+	trainingDataFile  = "training_data.json"
 	maxHistoryEntries = 200
 )
 
@@ -46,6 +47,15 @@ type HistoryEntry struct {
 	Executed    bool   `json:"executed"`
 	Mode        string `json:"mode"` // "fix" | "nl"
 	Backend     string `json:"backend"` // "local" | "cloud"
+}
+
+// TrainingExample: Fine-tuning için kullanılacak veri formatı
+type TrainingExample struct {
+	Instruction string `json:"instruction"` // Kullanıcının doğal dil sorgusu
+	Output      string `json:"output"`      // Onaylanmış komut
+	Tool        string `json:"tool"`        // Tespit edilen araç (git, stanctl, etc.)
+	Timestamp   string `json:"timestamp"`   // Ne zaman eklendi
+	Source      string `json:"source"`      // "user_approved" | "manual" | "synthetic"
 }
 
 // ToolMeta: bir araç klasörünün _meta.txt'sinden okunan bilgiler
@@ -116,6 +126,9 @@ func main() {
 			return
 		case "--index":
 			runIndex(loadConfig(), true)
+			return
+		case "--training-stats":
+			showTrainingStats()
 			return
 		}
 	}
@@ -361,6 +374,13 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 	if readYesNo() {
 		executed = true
 		runCommand(suggestedCmd)
+		
+		// Başarılı komutları training data'ya ekle
+		if detectedTool == "none" {
+			detectedTool = "general"
+		}
+		addApprovedCommand(query, suggestedCmd, detectedTool)
+		fmt.Println("✅ Komut training data'ya eklendi")
 	} else {
 		fmt.Println("İptal edildi.")
 	}
@@ -1201,17 +1221,96 @@ func showHistory() {
 	fmt.Printf("📜 Son %d kayıt:\n\n", len(entries[start:]))
 	for _, e := range entries[start:] {
 		status := "⬜"
-		if e.Executed { status = "✅" }
+		if e.Executed {
+			status = "✅"
+		}
 		icon := "🔧"
-		if e.Mode == "nl" { icon = "🧠" }
-		if e.Mode == "chat" { icon = "💬" }
+		if e.Mode == "nl" {
+			icon = "🧠"
+		}
+		if e.Mode == "chat" {
+			icon = "💬"
+		}
 		backendIcon := "💻"
-		if e.Backend == "cloud" { backendIcon = "☁️" }
+		if e.Backend == "cloud" {
+			backendIcon = "☁️"
+		}
 		t, _ := time.Parse(time.RFC3339, e.Timestamp)
 		fmt.Printf("%s %s %s [%s] %s\n   → %s\n\n",
 			status, icon, backendIcon, t.Format("02 Jan 15:04"), e.Command, e.Suggestion)
 	}
 }
+// ─── Training Data Collection ─────────────────────────────────────────────────
+
+func trainingDataPath() string {
+	return filepath.Join(termAIDir(), trainingDataFile)
+}
+
+func loadTrainingData() []TrainingExample {
+	path := trainingDataPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return []TrainingExample{}
+	}
+	var examples []TrainingExample
+	json.Unmarshal(data, &examples)
+	return examples
+}
+
+func saveTrainingExample(example TrainingExample) {
+	examples := loadTrainingData()
+	
+	// Duplicate kontrolü (aynı instruction + output varsa ekleme)
+	for _, ex := range examples {
+		if ex.Instruction == example.Instruction && ex.Output == example.Output {
+			return // Zaten var
+		}
+	}
+	
+	examples = append(examples, example)
+	
+	data, err := json.MarshalIndent(examples, "", "  ")
+	if err != nil {
+		return
+	}
+	
+	os.WriteFile(trainingDataPath(), data, 0644)
+}
+
+func addApprovedCommand(query, command, tool string) {
+	example := TrainingExample{
+		Instruction: query,
+		Output:      command,
+		Tool:        tool,
+		Timestamp:   time.Now().Format(time.RFC3339),
+		Source:      "user_approved",
+	}
+	saveTrainingExample(example)
+}
+
+func showTrainingStats() {
+	examples := loadTrainingData()
+	
+	if len(examples) == 0 {
+		fmt.Println("📊 Training Data: Henüz onaylanmış komut yok")
+		return
+	}
+	
+	// Araç bazında istatistik
+	toolStats := make(map[string]int)
+	for _, ex := range examples {
+		toolStats[ex.Tool]++
+	}
+	
+	fmt.Printf("📊 Training Data İstatistikleri\n")
+	fmt.Printf("   Toplam: %d onaylanmış komut\n\n", len(examples))
+	fmt.Printf("   Araç Dağılımı:\n")
+	for tool, count := range toolStats {
+		fmt.Printf("   • %s: %d örnek\n", tool, count)
+	}
+	fmt.Printf("\n   Dosya: %s\n", trainingDataPath())
+}
+
 
 // ─── Index ─────────────────────────────────────────────────────────────────────────────
 
@@ -1241,6 +1340,7 @@ Kullanım:
   term-ai --config                 Mevcut ayarları göster
   term-ai --models                 Kurulu Ollama modellerini listele
   term-ai --index                  Knowledge dosyalarını vektörize et
+  term-ai --training-stats         📊 Onaylanmış komut istatistikleri
   term-ai --no-history <komut>     Geçmişi atla (okuma + kaydetme yok)
   term-ai --cloud <sorgu>          Cloud API kullan (local yerine)
   term-ai --chat "<soru>"          Serbest sohbet modu (komut üretme yok)
@@ -1252,6 +1352,10 @@ FIX modu:
 NL modu:
   term-ai "instana backendi production modda ayağa kaldır"
   term-ai --cloud "karmaşık bir bash scripti yaz"  ← cloud ile
+
+Training Data:
+  Onayladığınız her komut otomatik olarak ~/.term-ai/training_data.json'a kaydedilir.
+  Bu dosya gelecekte model fine-tuning için kullanılabilir.
 
 Config (~/.term-ai/config.json):
   local:  model, nl_model, ollama_url

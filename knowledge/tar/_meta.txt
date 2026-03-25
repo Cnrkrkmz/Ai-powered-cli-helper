@@ -1,0 +1,3 @@
+# DESCRIPTION: tar command usage examples from NL2Bash dataset
+# KEYWORDS: tar, cvf, czf, general
+# FILES: cvf=cvf | czf=czf | general=general

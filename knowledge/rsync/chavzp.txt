@@ -1,0 +1,8 @@
+# rsync — chavzp examples
+
+Task: Archive "/path/to/copy" on host "remote.host" as user "user" to "/path/to/local/storage" updating files with different checksums, showing human readable progress and statistics, and compressing data during transmission
+Command: rsync -chavzP --stats user@remote.host:/path/to/copy /path/to/local/storage
+
+Task: Archive "/path/to/copy" to "/path/to/local/storage" on host "host.remoted.from" as user "user" updating files with different checksums, showing human readable progress and statistics, and compressing data during transmission
+Command: rsync -chavzP --stats /path/to/copy user@host.remoted.from:/path/to/local/storage
+

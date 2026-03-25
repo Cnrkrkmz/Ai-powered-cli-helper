@@ -1,0 +1,20 @@
+# find — version examples
+
+Task: Show find's version
+Command: find --version
+
+Task: Show version information of the find utility
+Command: find -version
+
+Task: check find version
+Command: find --version
+
+Task: display the version of find
+Command: find --version
+
+Task: display the version of find command
+Command: find --version
+
+Task: display the version of find command
+Command: find -version
+

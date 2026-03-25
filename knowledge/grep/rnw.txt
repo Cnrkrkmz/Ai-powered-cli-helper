@@ -1,0 +1,11 @@
+# grep — rnw examples
+
+Task: Finds recursively all files in '/path/' that contain 'pattern', and prints matched strings with string number and file name.
+Command: grep -rnw '/path/' -e 'pattern'
+
+Task: Recursively finds 'pattern' in files from current folder, and prints matched string with number only if matching whole word.
+Command: grep -rnw "pattern"
+
+Task: Recursively finds all files with whole word "pattern" in a current folder, and precedes found string with its number in file.
+Command: grep -rnw `pwd` -e "pattern"
+

@@ -1,0 +1,11 @@
+# grep — ar examples
+
+Task: Calculate the md5 sum of all ".py" files in "/your/dir" including content and filenames
+Command: grep -ar -e . --include="*.py" /your/dir | md5sum | cut -c-32
+
+Task: Calculate the md5 sum of all files in "/your/dir" including content and filenames
+Command: grep -ar -e . /your/dir | md5sum | cut -c-32
+
+Task: Calculate the md5 sum of all files in "/your/dir" including content and filenames and following symbolic links
+Command: grep -aR -e . /your/dir | md5sum | cut -c-32
+

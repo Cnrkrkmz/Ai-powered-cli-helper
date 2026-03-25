@@ -1,0 +1,47 @@
+# ls — general examples
+
+Task: Calculate the md5 sum of all files in the current directory with the filename printed first
+Command: ls -p | grep -v / | xargs md5sum | awk '{print $2,$1}'
+
+Task: Change the owner of all files in "/empty_dir/" to "root" using at most 10 files at a time
+Command: ls /empty_dir/ | xargs -L10 chown root
+
+Task: Change the owner of all files in "/empty_dir/" to "root" using at most 10 files at a time
+Command: ls /empty_dir/ | xargs -n10 chown root
+
+Task: Check if the file "somelink" links to exists
+Command: ls `readlink somelink`
+
+Task: Copies file 'file.dat' to each top-level directory in the current directory.
+Command: ls | xargs -n 1 cp -i file.dat
+
+Task: Copies file 'file.txt' to each top-level directory in the current directory.
+Command: ls -d */ | xargs -iA cp file.txt A
+
+Task: Counts all *.mod files in a /boot/grub/ folder.
+Command: ls -l /boot/grub/*.mod | wc -l
+
+Task: Counts all top-level files in a current folder.
+Command: ls -1 | wc -l
+
+Task: Display a detailed listing of the current directory, pausing for user input after each page.
+Command: ls -l | more
+
+Task: Display list of files ending with '.txt' in the current folder to the terminal twice and output it to the text file "txtlist.txt"
+Command: ls *.txt | tee /dev/tty txtlist.txt
+
+Task: Display the output of "ls" for an 80 character wide display
+Command: ls | column -c 80
+
+Task: Examines the path expanded by variable $FILENAME to see if it is a symlink and if so, sets SOURCE_DIR to the location of the link itself.
+Command: ls -l $FILENAME | grep -q ^l && SOURCE_DIR=$(ls -l $FILENAME | awk '{print $NF}');
+
+Task: Filters only directories from long file listing of a current directory, and prints their names.
+Command: ls -l | grep "^d" | awk -F" " '{print $9}'
+
+Task: Filters only directories from long file listing of the current directory
+Command: ls -l --color=always "$@" | egrep --color=never '^d|^[[:digit:]]+ d'
+
+Task: Filters only directories from long file listing of the current directory
+Command: ls -l --color=always "$@" | grep --color=never '^d'
+

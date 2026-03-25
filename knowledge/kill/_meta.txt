@@ -1,0 +1,3 @@
+# DESCRIPTION: kill command usage examples from NL2Bash dataset
+# KEYWORDS: kill, general, hup
+# FILES: general=general | hup=hup

@@ -1,0 +1,47 @@
+# ssh — general examples
+
+Task: Allocate a pseudo-terminal and execute "screen -r -X ls" which executes "ls" within the screen session on host "example.com"
+Command: ssh -t example.com "screen -r -X ls"
+
+Task: Allocate a pseudo-terminal and execute "screen -r" followed by "ls" on host "example.com"
+Command: ssh -t example.com "screen -r; ls"
+
+Task: Allocate a pseudo-terminal and execute "screen -r" on host "example.com"
+Command: ssh -t example.com "screen -r"
+
+Task: Check if "$FILE_PATH" exists on "$HOST"
+Command: ssh -q $HOST [[ -f $FILE_PATH ]] && echo "File exists" || echo "File does not exist";
+
+Task: Check if "/path/to/file" exists on "remote_host"
+Command: ssh remote_host test -f "/path/to/file" && echo found || echo not found
+
+Task: Check if "/path/to/file" exists on remote host "host"
+Command: ssh host "test -e /path/to/file"
+
+Task: Check that the master SSH control socket "my-ctrl-socket" to "jm@sampledomain.com" is running
+Command: ssh -S my-ctrl-socket -O check jm@sampledomain.com
+
+Task: Check that the master ssh connection "officefirewall" is running
+Command: ssh -O check officefirewall
+
+Task: Close the master SSH control socket "my-ctrl-socket" to "jm@sampledomain.com"
+Command: ssh -S my-ctrl-socket -O exit jm@sampledomain.com
+
+Task: Connect to "$USER_AT_HOST" using connection sharing on "$SSHSOCKET" and request the master to exit
+Command: ssh -S "$SSHSOCKET" -O exit "$USER_AT_HOST"
+
+Task: Connect to host "$USER_AT_HOST" in master mode in the background without executing any commands and set the ControlPath to "$SSHSOCKET"
+Command: ssh -M -f -N -o ControlPath="$SSHSOCKET" "$USER_AT_HOST"
+
+Task: Connect to host "${HOSTNAME}" as user "${USERNAME}" and execute "${SCRIPT}" non-interactively
+Command: ssh -l ${USERNAME} ${HOSTNAME} "${SCRIPT}"
+
+Task: Connect to host "hostname" as user "username", automatically add the host key to the list of known hosts, and execute "pwd; ls" non-interactively
+Command: ssh -o StrictHostKeyChecking=no -l username hostname "pwd; ls"
+
+Task: Connect to host 'hostname' as user 'username' by forcing host key confirmation
+Command: ssh -o UserKnownHostsFile=/dev/null username@hostname
+
+Task: Copy "file" from "REMOTE" into local clipboard
+Command: ssh USER@REMOTE "cat file"|xclip -i
+

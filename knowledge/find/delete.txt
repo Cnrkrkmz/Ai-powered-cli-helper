@@ -1,0 +1,8 @@
+# find — delete examples
+
+Task: Delete all files and directories
+Command: find -delete
+
+Task: Delete all files/directories under current directory
+Command: find -delete
+

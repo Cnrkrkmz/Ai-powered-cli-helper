@@ -1,0 +1,11 @@
+# find — amin examples
+
+Task: Find all files/directories under current directory that were accessed 30 minutes ago
+Command: find -amin 30
+
+Task: Find all files/directories under current directory that were accessed more than 25 but less than 35 minutes ago
+Command: find -amin +25 -amin -35
+
+Task: find files in the current directory and sub-directories, that were accessed within last hour
+Command: find -amin -60
+

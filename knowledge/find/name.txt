@@ -1,0 +1,47 @@
+# find — name examples
+
+Task: Backup all PHP files under the current directory tree
+Command: find -name "*.php" –exec cp {} {}.bak \;
+
+Task: Compresses all '*.xml' files under current directory with 'bzip2' utility.
+Command: find -name \*.xml -print0 | xargs -0 -n 1 -P 3 bzip2
+
+Task: Copies all files under current directory like '*FooBar*' to the '~/foo/bar' directory.
+Command: find -name '*FooBar*' -print0 | xargs -0 cp -t ~/foo/bar
+
+Task: Copy all .patch files from the current directory tree to patches/
+Command: find -name '*.patch' -print0 | xargs -0 -I {} cp {} patches/
+
+Task: Copy all files below the current directory whose names contain "FooBar" to directory foo/bar/ in user's home directory.
+Command: find -name '*FooBar*' -print0 | xargs -0 cp -t ~/foo/bar
+
+Task: Count all the lines of all files with names ending with 'php' in current directory recursively
+Command: find -name '*php' | xargs cat | wc -l
+
+Task: Count all the lines of all php files in current directory recursively
+Command: find -name '*.php' | xargs cat | wc -l
+
+Task: Count the number of .gz files in the current directory tree
+Command: find -name "*.gz" | wc -l
+
+Task: Count the number of files named `file1'
+Command: find -name file1 | wc -l
+
+Task: Count the number of files/directories named file1 under current directory
+Command: find -name file1 | wc -l
+
+Task: Create an empty file "foo" in each directory under the current directory containing a file named "bar".
+Command: find -name "bar" -execdir touch foo \;
+
+Task: Delete all files/directories named 'file' under current directory tree
+Command: find -name file -delete
+
+Task: Display a long listing of all files/directories named 'file' under current directory tree
+Command: find -name file -ls
+
+Task: Display the sizes and filepaths of all files/directories with '.undo' extension under current directory tree
+Command: find -name *.undo -print0 | du -hc --files0-from=-
+
+Task: Exclude directory from find . command
+Command: find -name "*.js" -not -path "./directory/*"
+

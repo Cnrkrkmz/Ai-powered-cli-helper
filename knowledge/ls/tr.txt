@@ -1,0 +1,11 @@
+# ls — tr examples
+
+Task: Delete all but the most recent 5 files
+Command: ls -tr | head -n -5 | xargs rm
+
+Task: Delete the oldest file with '.tgz' or '.gz' extension under '/home/backups' directory tree
+Command: ls -tr $(find /home/backups -name '*.gz' -o -name '*.tgz')|head -1|xargs rm -f
+
+Task: Removes all files from current folder but 5 newest ones.
+Command: ls -tr | head -n -5 | xargs rm
+

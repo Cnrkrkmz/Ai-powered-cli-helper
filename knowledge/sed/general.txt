@@ -1,0 +1,47 @@
+# sed — general examples
+
+Task: A no-op on filename with sed
+Command: sed -i "s/\\\\\n//g" filename
+
+Task: Add newline before all 2nd and consequent occurrences of '3d3d' in file 'temp' and write each line from the output to files with prefix 'temp' and numeric suffixes
+Command: sed 's/3d3d/\n&/2g' temp | split -dl1 - temp
+
+Task: Append "& Bytes" to the end of every line in "$TEMPFILE" and format the result as a table
+Command: sed 's/.*/& Bytes/' "$TEMPFILE" | column -t
+
+Task: Append "\r" on each line of file "input" and display the printable characters
+Command: sed 's/$/\r/g' input |od -c
+
+Task: Convert all characters in standard input to lower case
+Command: sed 's/.*/\L&/'
+
+Task: Count non-blank lines in a file 'foo.c'
+Command: sed '/^\s*$/d' foo.c | wc -l
+
+Task: Count the number of "x" characters in "filename"
+Command: sed 's/[^x]//g' filename | tr -d '\012' | wc -c
+
+Task: Counts all non-blank lines in the $i file.
+Command: sed '/^\s*$/d' $i | wc -l ## skip blank lines
+
+Task: Cut all remote paths from HTTP URLs received from standard input (one per line) keeping only the protocol identifier and host name, of the form http://example.com
+Command: sed -n 's;\(http://[^/]*\)/.*;\1;p'
+
+Task: Cut all remote paths from HTTP URLs received from standard input (one per line) keeping only the protocol identifier, host name, and trailing slash, of the form http://example.com/
+Command: sed -n 's;\(http://[^/]*/\).*;\1;p'
+
+Task: Delete all lines matching "pattern to match" in "./infile" and make a backup with suffix ".bak"
+Command: sed -i.bak '/pattern to match/d' ./infile
+
+Task: Delete all lines matching "pattern" in "filename"
+Command: sed -i '/pattern/d' filename
+
+Task: Delete all lines matching "some string here" in "yourfile"
+Command: sed --in-place '/some string here/d' yourfile
+
+Task: Delete empty lines from standard input
+Command: sed -n "s/^$//;t;p;"
+
+Task: Delete the line containing "start" plus the next 4 lines from standard input
+Command: sed '/start/,+4d'
+

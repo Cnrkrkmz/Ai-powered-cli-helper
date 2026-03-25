@@ -1,0 +1,8 @@
+# find — prune examples
+
+Task: Find files/directories under current directory without descending into it
+Command: find -prune
+
+Task: Print the current directory
+Command: find -prune
+

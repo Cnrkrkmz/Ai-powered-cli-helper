@@ -1,0 +1,8 @@
+# rsync — nvral examples
+
+Task: Perform a dry run to recursively copy "test/a" to "test/dest" excluding "test/a/b/c/d"
+Command: rsync -nvraL test/a test/dest --exclude=a/b/c/d
+
+Task: Recursively archive "test/a/" to "test/dest" excluding "test/a/b/c/d"
+Command: rsync -nvraL test/a/ test/dest --exclude=/b/c/d
+

@@ -1,0 +1,8 @@
+# ls — al examples
+
+Task: Filters only directories including hidden ones from long file listing of a current directory, and prints their names.
+Command: ls -Al | grep "^d" | awk -F" " '{print $9}'
+
+Task: Prints long listing of file 'file.ext'.
+Command: ls -al file.ext
+

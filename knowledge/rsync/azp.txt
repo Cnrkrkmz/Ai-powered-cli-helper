@@ -1,0 +1,8 @@
+# rsync — azp examples
+
+Task: Archive "/path/to/files/source" to "user@remoteip:/path/to/files/destination" via ssh on port 2121
+Command: rsync -azP -e "ssh -p 2121" /path/to/files/source user@remoteip:/path/to/files/destination
+
+Task: Archive "source" to "destination" via ssh on port "PORT_NUMBER"
+Command: rsync -azP -e "ssh -p PORT_NUMBER" source destination
+

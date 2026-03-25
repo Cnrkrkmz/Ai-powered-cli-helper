@@ -1,0 +1,47 @@
+# find — mtime examples
+
+Task: Find all files under current directory that were modified in the last 24 hours
+Command: find -mtime 0
+
+Task: Find all files under current directory that were modified in the last 24 hours and also include the files that were modified in less than 1 day ago
+Command: find -mtime +0
+
+Task: Find all files under current directory that were modified less than 1 day ago
+Command: find -mtime -1
+
+Task: Find all files under current directory that were modified more than 1 day ago
+Command: find -mtime +1
+
+Task: Look for any files that have not been modified in the last two days
+Command: find -mtime +2
+
+Task: Look for any files that were modified 2-5 days ago
+Command: find -mtime +2 -mtime -5
+
+Task: Search the current directory recursively for files last modified within the past 24 hours ignoring .swp files and paths ./es* and ./en*
+Command: find -mtime 0 -not \( -name '*.swp' -o -path './es*' -o -path './en*' \)
+
+Task: display all the files in the current folder that have been modified in the last 24 hours
+Command: find  -mtime -1
+
+Task: display all the files in the current folder which have not been modified in the last 7 days and which are not in the list "file.lst"
+Command: find -mtime +7 -print | grep -Fxvf file.lst
+
+Task: display all the files in the current folder which have not been modified in the last 7 days and which are not in the list "file.lst" and save the output to a file
+Command: find -mtime +7 -print | grep -vf file.lst > found.lst
+
+Task: find all regular/normal files in the current folder that have been modified in the last 120 hours
+Command: find -mtime -5 -type f -print
+
+Task: find all the files in the current folder that have been modified in the last 7 days
+Command: find -mtime -7 -daystart
+
+Task: find all the files that are modified in the last 1 day
+Command: find  -mtime -1
+
+Task: find all the files that are modified in the last 1 day
+Command: find -mtime +0 -mtime -1
+
+Task: find all the files that have been modified exactly 1 day ago
+Command: find -mtime 1
+

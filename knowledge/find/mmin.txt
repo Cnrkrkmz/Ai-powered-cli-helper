@@ -1,0 +1,29 @@
+# find — mmin examples
+
+Task: List all files in the current directory tree that were last modified more than 60 minutes ago
+Command: find -mmin +60
+
+Task: List all files in the current directory tree that were modified 60 minutes ago
+Command: find -mmin 60
+
+Task: display all files in current folder which have been modified in the last 60 minutes
+Command: find -mmin 60
+
+Task: display all files in current folder which have not been modified in the last 60 minutes
+Command: find -mmin +60
+
+Task: find all files in the current folder that are modified exactly 1 minute ago
+Command: find -mmin 1 -print
+
+Task: find all files in the current folder that are modified exactly 2 minutes ago
+Command: find -mmin 2 -print
+
+Task: find all the files in the current directory and sub-directories, that were edited within the last 1 hour and execute the list command with long listing format
+Command: find -mmin -60 -exec ls -l {} \;
+
+Task: find all the files in the current folder which have been modified in the 10 minutes ago
+Command: find -mmin +15 -mmin -25
+
+Task: find all the files that have been modified in the last 60 minutes
+Command: find -mmin -60
+

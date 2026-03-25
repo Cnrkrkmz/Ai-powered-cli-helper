@@ -1,0 +1,26 @@
+# find — daystart examples
+
+Task: Find all files under current directory that were modified in the last 24 hours and also include the files that were modified in less than 1 day ago
+Command: find -daystart -mtime +0
+
+Task: display a long listing of all the files in the current folder that have been accessed in today from the start of the day
+Command: find -daystart   -atime 0 -ls
+
+Task: find al the files that are modified exactly 2 days ago
+Command: find -daystart -mtime 2
+
+Task: find all the files in the current folder that have been accessed in today from the start of the day
+Command: find -daystart   -atime 0
+
+Task: find all the files that are modified exactly one day ago
+Command: find -daystart -mtime 1
+
+Task: find all the files that are modified in the last 7 days
+Command: find -daystart -mtime -7
+
+Task: find all the files that are not modified in the last 7 days
+Command: find -daystart -mtime +7
+
+Task: find all the files that have been modified in the last 2 day
+Command: find -daystart -mitime -1
+

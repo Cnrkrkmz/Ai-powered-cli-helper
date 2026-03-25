@@ -1,0 +1,47 @@
+# grep — general examples
+
+Task: (Linux specific) Look for any instance of "HIGHMEM" in the current kernel's compile-time config file.
+Command: grep “HIGHMEM” /boot/config-`uname -r`
+
+Task: (Linux-specific) Display all lines containing PROBES in the current kernel's compile-time config file.
+Command: grep PROBES /boot/config-$(uname -r)
+
+Task: (Linux-specific) Display all lines containing UTRACE in the current kernel's compile-time config file.
+Command: grep UTRACE /boot/config-$(uname -r)
+
+Task: (Linux-specific) Look for any instance of "ds1337" in the modules.alias file matching current kernel release
+Command: grep ds1337 /lib/modules/`uname -r`/modules.alias
+
+Task: Counts lines with all-cased word 'null' in file 'myfile.txt'.
+Command: grep -n -i null myfile.txt | wc -l
+
+Task: Counts non-blank lines (lines with spaces are considered blank) in all *.py files in a current folder.
+Command: grep -v '^\s*$' *.py | wc
+
+Task: Counts number of lines with 'OK' in file 'filename'.
+Command: grep "OK" <filename> | wc -l
+
+Task: Delete all lines in "file" that contain "pattern", using "temp" as temporary working file (ie. shouldn't exist).
+Command: grep -v "pattern" file > temp && mv temp file
+
+Task: Delete line 2 in numbered file "file" and renumber
+Command: grep -v '^2 ' file | cut -d' ' -f2- | nl -w1 -s' '
+
+Task: Display all lines in 'file' containing 'something', pausing for user input after each page.
+Command: grep something file | more
+
+Task: Display the contents of file 'filename' excluding lines starting with # or empty/space-only lines, waiting for user interaction after each page.
+Command: grep -v '^$\|^#\|^\s*\#' filename | grep -v "^[[:space:]]*$" | more
+
+Task: Display the entire contents of 'file', replacing only the very first instance of "old" with "new".
+Command: grep -E -m 1 -n 'old' file | sed 's/:.*$//' - | sed 's/$/s\/old\/new\//' - | sed -f - file
+
+Task: Filter /path/to/logfile for any lines containing the specified date, paging interactively through the output.
+Command: grep 'Nov 12 2012' /path/to/logfile | less
+
+Task: Find all files/directories under /home/foo/public_html/ that were modified less than 60 minutes ago
+Command: grep ! error_log | find /home/foo/public_html/ -mmin -60
+
+Task: Find all lines matching "$USER" in "file" and number the output
+Command: grep  $USER file |nl
+

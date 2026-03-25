@@ -1,0 +1,11 @@
+# ls — ld examples
+
+Task: Prints long listing of directories '/tmp', '/tnt' themselves bordered with '<--' and '--->'.
+Command: ls -ld /tmp /tnt | sed 's/^.*$/<-- & --->/'
+
+Task: Prints long listing of directories '/tmp', '/tnt' themselves.
+Command: ls -ld /tmp /tnt
+
+Task: Recursively lists all files in a current folder in long format.
+Command: ls -ld $(find .)
+

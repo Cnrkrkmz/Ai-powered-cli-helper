@@ -1,0 +1,8 @@
+# rsync — zvr examples
+
+Task: Copy all files matching "*.sh" in "$from/*" to "root@$host:/home/tmp/" compressing data during transmission
+Command: rsync -zvr --include="*.sh" --exclude="*" $from/*  root@$host:/home/tmp/
+
+Task: Recursively copy all files matching "*.sh" in "$from" to "root@$host:/home/tmp/" compressing data during transmission
+Command: rsync -zvr --exclude="*" --include="*.sh" --include="*/" "$from" root@$host:/home/tmp/
+

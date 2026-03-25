@@ -1,0 +1,8 @@
+# find — size examples
+
+Task: Find files that are 100k
+Command: find -size 100k
+
+Task: find all files in the current directory which are bigger than 2MB
+Command: find -size +2M
+

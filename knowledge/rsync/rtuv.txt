@@ -1,0 +1,8 @@
+# rsync — rtuv examples
+
+Task: Synchronize "/path/to/dir_a" with files in "/path/to/dir_b/" if the files are newer
+Command: rsync -rtuv /path/to/dir_b/* /path/to/dir_a
+
+Task: Synchronize "/path/to/dir_b" with files in "/path/to/dir_a/" if the files are newer
+Command: rsync -rtuv /path/to/dir_a/* /path/to/dir_b
+

@@ -1,0 +1,8 @@
+# find — gid examples
+
+Task: Set the group to "username" for all files with GID=1000 in the current directory tree
+Command: find -gid 1000 -exec chown -h :username {} \;
+
+Task: change the owner of the files which belong to the group 1000 to username and modify only the symbolic link not the originally pointed file
+Command: find -gid 1000 -exec chown -h :username {} \;
+

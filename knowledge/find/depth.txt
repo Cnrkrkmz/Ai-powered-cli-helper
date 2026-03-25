@@ -1,0 +1,23 @@
+# find — depth examples
+
+Task: Backup permissions of the files in the current directory tree
+Command: find -depth -printf '%m:%u:%g:%p\0' >saved-permissions
+
+Task: List all leaf directories (directories which don't contain any sub-directory) under current directory
+Command: find -depth -type d | while read dir;  do [[ ! $prev =~ $dir ]] && echo "${dir}" ; prev="$dir"; done
+
+Task: List all leaf directories (directories which don't contain any sub-directory) under current directory
+Command: find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D'
+
+Task: List all leaf directories of the current directory tree
+Command: find -depth -type d | while read dir;  do [[ ! $prev =~ $dir ]] && echo "${dir}" ; prev="$dir"; done
+
+Task: List all leaf directories of the current directory tree
+Command: find -depth -type d |sed 'h; :b; $b; N; /^\(.*\)\/.*\n\1$/ { g; bb }; $ {x; b}; P; D'
+
+Task: Recursively removes all empty folders under current folder.
+Command: find -depth -type d -empty -exec rmdir {} \;
+
+Task: search for the folder .dummy in the entire directory structure of "test folder" and remove it.
+Command: find -depth "Test Folder" -type d -name .dummy -exec rm -rf \{\} \;
+

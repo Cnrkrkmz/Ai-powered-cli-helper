@@ -1,0 +1,47 @@
+# find — mindepth examples
+
+Task: Delete all files under and below the current directory
+Command: find -mindepth 1 -delete
+
+Task: Delete everything in the current directory
+Command: find -mindepth 1 -maxdepth 1 -print0 | xargs -0 rm -rf
+
+Task: Find all files/directories in 1 level down the current directory
+Command: find -mindepth 1 -maxdepth 1
+
+Task: Find all files/directories in level $i down the current directory with all positional parameters appended with the find command
+Command: find -mindepth $i -maxdepth $i "$@"
+
+Task: Find all files/directories in level 2 down the current directory
+Command: find -mindepth 2 -maxdepth 2
+
+Task: Find all files/directories named file in 2 and 3 levels down the current directory
+Command: find -mindepth 2 -maxdepth 3 -name file
+
+Task: Find all files/directories named file in minimum 4 levels down the current directory
+Command: find -mindepth 4 -name file
+
+Task: Find all files/directories with case insensitive name pattern $TARGET that are located in minimum 10 level down the current directory
+Command: find -mindepth 10 -iname $TARGET
+
+Task: Find the directories whose names contain "New Parts" at level 3 of the current directory tree and create symlinks to them in /cygdrive/c/Views
+Command: find -mindepth 3 -maxdepth 3 -type d -name "*New Parts*" -exec ln -s -t /cygdrive/c/Views {} \;
+
+Task: Find the directories whose pathnames contain "New Parts" at level 3 of the current directory tree and create symlinks to them in /cygdrive/c/Views
+Command: find -mindepth 3 -maxdepth 3 -type d | grep "New Parts" | tr '\012' '\000' | xargs -0 ln -s -t /cygdrive/c/Views
+
+Task: Find the password file between sub-directory level 2 and 4
+Command: find -mindepth 3 -maxdepth 5 -name passwd
+
+Task: Find the password file between sub-directory level 2 and 4.
+Command: find -mindepth 3 -maxdepth 5 -name passw
+
+Task: Print and recursively remove the alphabetically last directory in the current directory
+Command: find -mindepth 1 -maxdepth 1 -type d | cut -c 3- | sort -k1n | tail -n 1 | xargs -r echo rm -r
+
+Task: Print the current directory
+Command: find -mindepth 0 -maxdepth 0
+
+Task: Remove all files/directories in the current directory without '.git' and '.gitignore'
+Command: find -mindepth 1 -depth -print0 | grep -vEzZ '(\.git(/|$)|/\.gitignore$)' | xargs -0 rm -rvf
+

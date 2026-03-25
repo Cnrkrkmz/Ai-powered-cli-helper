@@ -1,0 +1,47 @@
+# awk — general examples
+
+Task: Append "foo" and "bar" column in file "file" with values dependent on the current table contents
+Command: awk 'NR==1 {print $0, "foo", "bar"; next} {print $0, ($2=="x"?"-":"x"), ($4=="x"?"-":"x")}' file | column -t
+
+Task: Compare column 3 with column 2 of the next line in "file" and format output as a table
+Command: awk 'NR==1 { print; next } { print $0, ($1 == a && $2 == b) ? "equal" : "not_equal"; a = $1; b = $3 }' file | column -t
+
+Task: Counts lines in file fileName ignoring empty lines and lines with spaces only.
+Command: awk '!/^[[:space:]]*$/{++x} END{print x}' filename
+
+Task: Decompress "file2.txt" and "file1.txt" and print lines in "file1.txt" that match the 5th tab separated field in "file2.txt"
+Command: awk -F'\t' 'NR==FNR{a[$5];next} $5 in a' <(zcat file2.txt) <(zcat file1.txt)
+
+Task: Display inputfile all on one line (replace newlines by spaces)
+Command: awk '{printf "%s ", $0} END {printf "\n"}' inputfile
+
+Task: Display inputfile all on one line (replace newlines by spaces)
+Command: awk '{printf "%s ", $0}' inputfile
+
+Task: Display inputfile all on one line (replace newlines by spaces)
+Command: awk '{printf "%s|", $0} END {printf "\n"}' inputfile
+
+Task: Display inputfile all on one line (replace newlines by spaces)
+Command: awk 1 ORS=' ' file
+
+Task: Execute "script.awk" on "file" and format the output as a table
+Command: awk -f script.awk file{,} | column -t
+
+Task: Execute awk script "script.awk" on "File2" and "File1" and format output as a table
+Command: awk -f script.awk File2 File1 | rev | column -t | rev
+
+Task: Execute awk script "script.awk" that exists in "$PATH" with argument "arg1"
+Command: awk -f `which script.awk` arg1
+
+Task: Execute awk script "script.awk" with 2 arguments both "file.txt" and format the output as a table
+Command: awk -f script.awk file.txt{,} | column -t
+
+Task: File 'mydatafile' has a number on each line, display the sum of these numbers rounded to lowest integer.
+Command: awk '{s+=$1} END {printf "%.0f", s}' mydatafile
+
+Task: File 'mydatafile' has a number on each line, display the sum of these numbers.
+Command: awk '{s+=$1} END {print s}' mydatafile
+
+Task: Filter contents of 'file' through awk commands written in script.awk, display the result.
+Command: awk -f script.awk file
+

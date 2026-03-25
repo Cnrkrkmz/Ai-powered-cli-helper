@@ -1,0 +1,11 @@
+# rsync — avr examples
+
+Task: Archive "foo/bar/baz.c" to "remote:/tmp/" preserving the relative path of "foo/bar/baz.c"
+Command: rsync -avR foo/bar/baz.c remote:/tmp/
+
+Task: Archive "somedir/./foo/bar/baz.c" to "remote:/tmp/" preserving the relative path of "foo/bar/baz.c"
+Command: rsync -avR somedir/./foo/bar/baz.c remote:/tmp/
+
+Task: Archive directory specified by variable "i" to "/iscsi" preserving relative paths.
+Command: rsync -avR $i /iscsi;
+

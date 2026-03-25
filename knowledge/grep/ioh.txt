@@ -1,0 +1,8 @@
+# grep — ioh examples
+
+Task: Search case insensitively for 'facebook', 'xing', 'linkedin', ''googleplus' in file 'access-log.txt', extract the matched part, sort them and print them by sorting them in asending order of the number of repeated lines
+Command: grep -ioh "facebook\|xing\|linkedin\|googleplus" access-log.txt | sort | uniq -c | sort -n
+
+Task: Search for "facebook\|xing\|linkedin\|googleplus" in "access-log.txt" and print a count of the unique entries
+Command: grep -ioh "facebook\|xing\|linkedin\|googleplus" access-log.txt | sort | uniq -c | sort -n
+

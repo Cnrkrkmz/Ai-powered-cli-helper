@@ -1,0 +1,8 @@
+# ps — eo examples
+
+Task: Page through a list of all running processes on the system, with those taking most CPU at the top of the list.
+Command: ps -eo pcpu,pid,user,args | sort -r -k1 | less
+
+Task: Show total memory used by processes in MB
+Command: ps -eo size,pid,user,command --sort -size | awk '{ hr=$1/1024 ; printf("%13.2f Mb ",hr) } { for ( x=4 ; x<=NF ; x++ ) { printf("%s ",$x) } print "" }' | awk '{total=total + $1} END {print total}'
+

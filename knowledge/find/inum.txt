@@ -1,0 +1,14 @@
+# find — inum examples
+
+Task: Delete all files with inode number 804180
+Command: find -inum 804180 -exec rm {} \
+
+Task: Delete all files/directories with inode number 117672808 under current directory tree
+Command: find -inum 117672808 -exec rm {} \;
+
+Task: Find all files/directories with inode number 16187430 and move them to 'new-test-file-name'
+Command: find -inum 16187430 -exec mv {} new-test-file-name \
+
+Task: Remove the file with inode number 752010
+Command: find -inum 752010 -exec rm {} \;
+

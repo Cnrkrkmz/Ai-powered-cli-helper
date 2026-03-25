@@ -1,0 +1,11 @@
+# find — print examples
+
+Task: Find all files/directories under current directory
+Command: find -print
+
+Task: Find all files/directories under current directory and print them with newline as the delimiter
+Command: find -print | xargs -d'\n'
+
+Task: find the file with the name "esxcfg-firewall" in the current folder
+Command: find -print | grep esxcfg-firewall
+

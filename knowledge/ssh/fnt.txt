@@ -1,0 +1,8 @@
+# ssh — fnt examples
+
+Task: Set up SSH connection forwarding in the background with no terminal or command execution from localhost port 8888 to "proxyhost" port 8888 and a reverse connection from "officefirewall" port 22222 to "localhost" port 22
+Command: ssh -fNT -L8888:proxyhost:8888 -R22222:localhost:22 officefirewall
+
+Task: Set up local port forwards in the background with no terminal or command execution from port 4431 to host "www1" port 443 and port 4432 to host "www2" port 443 via the host "colocatedserver"
+Command: ssh -fNT -L4431:www1:443 -L4432:www2:443 colocatedserver
+

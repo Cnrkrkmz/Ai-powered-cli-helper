@@ -1,0 +1,8 @@
+# find — ls examples
+
+Task: List all files/directories under current directory
+Command: find -ls
+
+Task: List files in the current directory and below
+Command: find -ls
+

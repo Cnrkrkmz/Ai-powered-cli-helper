@@ -1,0 +1,17 @@
+# find — printf examples
+
+Task: Generate UUIDs for the files from the current directory tree
+Command: find -printf "%P\0" -exec uuid -v 4 \; | sort | awk -F'\0' '{ print $2 " " $1}'
+
+Task: Generate UUIDs for the files from the current directory tree
+Command: find -printf "%P\n"| sort | xargs -I '{}' bash -c 'echo $(uuid) {}'
+
+Task: Print every file's type, name, and inode
+Command: find -printf "%y %i %prn"
+
+Task: Print the path names of all files and directories in the current directory tree
+Command: find -printf '"%h/%f" '
+
+Task: display all the files in the current folder along with their timestamps and sort them and save them in the file1
+Command: find -printf '%p %T@\n' | sort > file1
+

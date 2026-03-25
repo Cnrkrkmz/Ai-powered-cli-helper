@@ -1,0 +1,11 @@
+# find — ipath examples
+
+Task: Find files/directories under current directory that matches './projects/insanewebproject' in their paths
+Command: find -ipath './projects/insanewebproject'
+
+Task: Find files/directories under current directory that matches './projects/insanewebproject' in their paths and show the first one
+Command: find -ipath './projects/insanewebproject'| head -n1
+
+Task: Find files/directories under current directory that matches 'projects/insanewebproject' in their paths
+Command: find -ipath 'projects/insanewebproject'
+

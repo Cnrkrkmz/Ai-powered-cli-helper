@@ -1,0 +1,14 @@
+# rsync — rvz examples
+
+Task: Archive "./dir" to "user@host:/path" via ssh on port 2222 and display progress
+Command: rsync -rvz -e 'ssh -p 2222' --progress ./dir user@host:/path
+
+Task: Archive "source" to "destination" via ssh with "rwX" permissions
+Command: rsync -rvz --chmod=ugo=rwX -e ssh source destination
+
+Task: Recursively move "./dir" to "user@host:/path" compressing data and displaying progress during transmission
+Command: rsync -rvz --progress --remove-sent-files ./dir user@host:/path
+
+Task: Recursively move "./dir" to "user@host:/path" via ssh on port 2222 compressing data and displaying progress during transmission
+Command: rsync -rvz -e 'ssh -p 2222' --progress --remove-sent-files ./dir user@host:/path
+

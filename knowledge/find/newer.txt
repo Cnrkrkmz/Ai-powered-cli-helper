@@ -1,0 +1,20 @@
+# find — newer examples
+
+Task: Find all files that were modified later than ordinary_file in the current directory and its sub-directories.
+Command: find -newer ordinary_file
+
+Task: Find all files which  are accessed after modifying /etc/passwd files.
+Command: find -newer /etc/passwd
+
+Task: Find files/directories that are newer than 'foo.txt' under current directory tree
+Command: find -newer foo.txt
+
+Task: find all files in the current directory and sub-directories that were modified after the /etc/passwd file was modified
+Command: find -newer /etc/passwd
+
+Task: find all files in the current folder which have been modified after /etc/passwd
+Command: find -newer /etc/passwd
+
+Task: find all the files in the current folder which have been modified after a specific timestamp and save the output to a file
+Command: find -newer timestamp-file -type f > list-of-files
+

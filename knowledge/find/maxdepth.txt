@@ -1,0 +1,47 @@
+# find — maxdepth examples
+
+Task: Calculate the md5 sum of all files in the current directory and formatting the output by removing parenthesis
+Command: find -maxdepth 1 -type f -exec md5sum {} \; | sed 's/[^(]*(\([^)]*\)) =/\1/'
+
+Task: Calculate the md5 sum of all files in the current directory with the filename printed first
+Command: find -maxdepth 1 -type f -exec md5sum {} \; | awk '{s=$2; $2=$1; $1=s;}1'
+
+Task: Delete all the 'test' directories from all directories under maximum 1 level down the current directory that contain directories named 'test' and 'live'
+Command: find -maxdepth 1 -type d -exec sh -c "cd {} && [ -d test ] && [ -d live ] && rm -rvf test " {} \;
+
+Task: Execute Shell script with find comamnd
+Command: find -maxdepth 0 -name "*.sh"  -exec ./lastline.sh {} \;
+
+Task: Find List directory  with sub-folder count .
+Command: find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type d | wc -l); let n--; printf "%4d : %s\n" $n "$dir"; done
+
+Task: Find List empty directories
+Command: find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" | wc -l); let n--; if [ $n -eq 0 ]; then printf "%4d : %s\n" $n "$dir"; fi; done
+
+Task: Find List of directories  with non-zero sub-folder count:
+Command: find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type d | wc -l); let n--; if [ $n -gt 0 ]; then printf "%4d : %s\n" $n "$dir"; fi; done
+
+Task: Find List of directory  with non-zero file count
+Command: find -maxdepth 1 -type d | sort | while read -r dir; do n=$(find "$dir" -type f | wc -l); if [ $n -gt 0 ]; then printf "%4d : %s\n" $n "$dir"; fi; done
+
+Task: Find all *.sql files in maximum 1 level down the current directory, process it with sed and then send the output to a mysql command
+Command: find -maxdepth 1 -name '*.sql' -exec cat '{}' \; | sed -e 's/ , );/1,1);/g' | mysql -D ootp
+
+Task: Find all *.sql files in maximum 1 level down the current directory, process it with sed and then send the output to a mysql command
+Command: find -maxdepth 1 -name '*.sql' -exec sed -e 's/ , );/1,1);/g' '{}' + | mysql -D ootp
+
+Task: Find all *.sql files in maximum 1 level down the current directory, process it with sed and then send the output to a mysql command
+Command: find -maxdepth 1 -name '*.sql' -exec sed -e 's/ , );/1,1);/g' '{}' | mysql -D ootp
+
+Task: Find all *.sql files in maximum 1 level down the current directory, process it with sed and then send the output to a mysql command
+Command: find -maxdepth 1 -name '*.sql' -print0 \; | xargs -0 sed -e 's/ , );/1,1);/g'  | mysql -D ootp
+
+Task: Find all directories in maximum 1 level down the current directory that were modified less than 1 day ago
+Command: find -maxdepth 1 -type d -mtime -1
+
+Task: Find all files in maximum 1 level down the current directory that were modified less than 1 day ago
+Command: find -maxdepth 1 -type f -mtime -1
+
+Task: Find all files in maximum 1 level down the current directory that were modified less than 1 day ago from today
+Command: find -maxdepth 1 -type f -daystart -mtime -1
+

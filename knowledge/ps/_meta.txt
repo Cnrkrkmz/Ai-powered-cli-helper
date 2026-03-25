@@ -1,0 +1,3 @@
+# DESCRIPTION: ps command usage examples from NL2Bash dataset
+# KEYWORDS: ps, aux, ef, eo, general
+# FILES: aux=aux | ef=ef | eo=eo | general=general

@@ -1,0 +1,47 @@
+# find — general examples
+
+Task: (Linux specific) Find all loadable modules for current kernel, whose name includes "perf"
+Command: find /lib/modules/`uname -r` -regex .*perf.*
+
+Task: Add "Line of text here" on top of each *.py files under current directory
+Command: find . -name \*.py -print0 | xargs -0 sed -i '1a Line of text here'
+
+Task: Add "Line of text here" on top of each *.py files under current directory
+Command: find . -name \*.py | xargs sed -i '1a Line of text here'
+
+Task: Add "execute" to the permissions of all directories in the home directory tree
+Command: find ~ -type d -exec chmod +x {} \;
+
+Task: Add '.avi' extension to all files/directories with '.mkv' extension under '/volume1/uploads' directory tree
+Command: find /volume1/uploads -name "*.mkv" -exec mv \{\} \{\}.avi \;
+
+Task: Add group write permission to all files in the current directory
+Command: find . -maxdepth 0 -type f -exec chmod g+w {} ';'
+
+Task: Add read and execute permission to every directory under the current directory
+Command: find . -type d -exec chmod +rx {} \;
+
+Task: Add read permission for 'other' for all files/directories named 'rc.conf' under current directory tree
+Command: find . -name "rc.conf" -exec chmod o+r '{}' \;
+
+Task: Add the .abc suffix to the names of all *.txt regular files in the current directory tree
+Command: find . -type f -iname '*.txt' -print0 | xargs -0 mv {} {}.abc
+
+Task: Add the execute and read permission for all and the write permission for the user to the dir_data directory and all of its sub-directories.
+Command: find ~/dir_data -type d -exec chmod a+xr,u+w {} \;
+
+Task: Append *.java files from the current directory tree to tar archive `myfile.tar'
+Command: find . -type f -name "*.java" | xargs tar rvf myfile.tar
+
+Task: Append all *.mp3 files modified within the last 180 days to tar archive `music.tar'
+Command: find . -name -type f '*.mp3' -mtime -180 -print0 | xargs -0 tar rvf music.tar
+
+Task: Append all PNG and JPG files to tar archive 'images.tar'
+Command: find . \( -iname "*.png" -o -iname "*.jpg" \) -print -exec tar -rf images.tar {} \;
+
+Task: Append all regular files modified in the last 24 hours to the "$archive.tar" tar archive
+Command: find . -mtime -1 -type f -exec tar rvf "$archive.tar" '{}' \;
+
+Task: Append all regular files modified in the last 24 hours to the "$archive.tar" tar archive
+Command: find . -mtime -1 -type f -print0 | xargs -0 tar rvf "$archive.tar"
+

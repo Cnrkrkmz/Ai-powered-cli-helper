@@ -1,0 +1,8 @@
+# find — help examples
+
+Task: Print a summary of the command-line usage of find
+Command: find --help
+
+Task: display the help of find command
+Command: find --help
+

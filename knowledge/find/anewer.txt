@@ -1,0 +1,8 @@
+# find — anewer examples
+
+Task: find all files in the current directory and sub-directories that were accessed after modifying /etc/hosts
+Command: find -anewer /etc/hosts
+
+Task: find all the files which have been accessed after modifying the file /etc/hosts
+Command: find -anewer /etc/hosts
+

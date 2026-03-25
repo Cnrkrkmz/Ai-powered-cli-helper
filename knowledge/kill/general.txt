@@ -1,0 +1,47 @@
+# kill — general examples
+
+Task: Check if process ID 1 exists (init or systemd) and current user has permission to send it signals.
+Command: kill -0 1
+
+Task: Clean up all zombie processes by instantly killing their parent process with SIGKILL signal.
+Command: kill -9 $(ps -A -ostat,ppid | grep -e '[zZ]'| awk '{ print $2 }')
+
+Task: Clean up all zombie processes by sending SIGTERM signal to their parent process, which requests them to terminate.
+Command: kill $(ps -A -ostat,ppid | awk '/[zZ]/{print $2}')
+
+Task: File 'save_pid.txt' contains a process ID, instantly kill this process with SIGKILL signal.
+Command: kill -9 `cat save_pid.txt`
+
+Task: Find and kill a process by name
+Command: kill $(ps aux | grep '[p]ython csp_build.py' | awk '{print $2}')
+
+Task: From another terminal, detach process $PID from its terminal and run it in the background.
+Command: kill -20 $PID; kill -18 $PID
+
+Task: Immediately kill all processes using TCP port 3000 on the system.
+Command: kill -9 $(lsof -i:3000 -t)
+
+Task: Instantly kill all processes whose command is 'myprocess'.
+Command: kill -9 \`pgrep myprocess\`
+
+Task: Kills all child process and process itself having id 24901.
+Command: kill `pstree -p 24901 | sed 's/(/\n(/g' | grep '(' | sed 's/(\(.*\)).*/\1/' | tr "\n" " "`
+
+Task: Send SIGKILL (signal 9) signal to all processes whose command matches "csp_build"
+Command: kill -9 `pgrep -f cps_build`
+
+Task: Send SIGKILL signal to all processes using TCP port 8080, terminating them instantly.
+Command: kill -9 $(lsof -t -i:8080)
+
+Task: Send SIGKILL signal to process ID 16085, killing it instantly.
+Command: kill -9 16085
+
+Task: Send SIGKILL signal to processes ID 18581, 18582, and 18583, killing them instantly.
+Command: kill -9 18581 18582 18583
+
+Task: Send SIGKILL to all processes owned by user 'daniel', terminating them instantly.
+Command: kill -9 $(lsof -t -u daniel)
+
+Task: Send SIGTERM (signal 15) to all processes using TCP port 6000 on the system.
+Command: kill -15 $( lsof -i:6000 -t )
+

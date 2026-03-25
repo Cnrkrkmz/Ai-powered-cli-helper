@@ -1,0 +1,8 @@
+# rsync — avzru examples
+
+Task: Archive "/media/10001/music/" on host "server" to local directory "/media/incoming/music/" and skip files that are newer in the destination, delete any files in the destination not in the source, and compress data during transmission
+Command: rsync -avzru --delete-excluded server:/media/10001/music/ /media/Incoming/music/
+
+Task: Archive "/media/Incoming/music/" to "/media/10001/music/" on host "server" and skip files that are newer in the destination, delete any files in the destination not in the source, and compress data during transmission
+Command: rsync -avzru --delete-excluded /media/Incoming/music/ server:/media/10001/music/
+

@@ -1,0 +1,11 @@
+# kill — hup examples
+
+Task: Send SIGHUP (hangup) signal to all parents of zombie processes.
+Command: kill -HUP $(ps -A -ostat,ppid | grep -e '[zZ]'| awk '{ print $2 }')
+
+Task: Send SIGHUP (hangup) signal to nginx master process, causing it to re-read its configuration and restart child processes if necessary.
+Command: kill -HUP $( cat /var/run/nginx.pid )
+
+Task: Send SIGHUP signal to all SSH server processes, causing them to re-read the SSH server configuration.
+Command: kill -HUP $(lsof -t -c sshd)
+

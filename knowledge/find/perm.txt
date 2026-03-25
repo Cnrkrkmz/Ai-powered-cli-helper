@@ -1,0 +1,17 @@
+# find — perm examples
+
+Task: Change permission to 755 of all files/directories under current directory tree that have 777 permission
+Command: find -perm 777 | xargs -I@ sudo chmod 755 '@'
+
+Task: Find all 777 permission files/directories under current directory tree
+Command: find -perm 777
+
+Task: Find all files/directories under current directory which have read-write permission for owner and only read permission for group and others
+Command: find -perm -644
+
+Task: Find all files/directories with 664 permission under current directory tree
+Command: find -perm 664
+
+Task: Find regular files with permissions less than 111
+Command: find -perm -111 -type f
+

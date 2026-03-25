@@ -1,0 +1,14 @@
+# find — path examples
+
+Task: Remove all directories called "test" from the current directory tree
+Command: find -path "*/test" -type d -delete
+
+Task: Remove all directories called "test" from the current directory tree
+Command: find -path "*/test/*" -delete
+
+Task: Search in the current directory and all sub-directories except ./D for the file named hi.dat
+Command: find -path ./D -prune -o -name hi.dat -print
+
+Task: Search subdirectory `Linux' in the current directory for file `teste.tex'
+Command: find -path './Linux/*' -name teste.tex
+

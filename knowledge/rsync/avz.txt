@@ -1,0 +1,35 @@
+# rsync — avz examples
+
+Task: Archive "/local/path/some_file" to "/some/path" on host "server.com" authenticating as user "usr", compress data during transmission, show progress details.
+Command: rsync -avz --progress local/path/some_file usr@server.com:"/some/path/"
+
+Task: Archive "/path/to/copy" on host "remote" as user "user" to "/local/path" via ssh on port "$portNumber"
+Command: rsync -avz -e "ssh -p $portNumber" user@remote.host:/path/to/copy /local/path
+
+Task: Archive "/source" and all files under "folder/" to "/dstfolder/" on host "remoteserver" as user "user" without copying files that already exist
+Command: rsync -avz --ignore-existing /source folder/* user@remoteserver:/dstfolder/
+
+Task: Archive "source" to "root@remote_server_name:/opt/backups" via ssh on port 3382 and compress data during transmission
+Command: rsync -avz --rsh='ssh -p3382' source root@remote_server_name:/opt/backups
+
+Task: Archive "src" to "dest" via ssh with permissions set to 755
+Command: rsync -avz --chmod=ug=rwx --chmod=o=rx -e ssh src dest
+
+Task: Archive "src/bar" on host "foo" to local directory "/data/tmp"
+Command: rsync -avz foo:src/bar /data/tmp
+
+Task: Archive "user@remoteip:/path/to/files/" to "/local/path" via ssh on port "$portNumber" and compressing data during transmission
+Command: rsync -avz -e "ssh -p $portNumber" user@remoteip:/path/to/files/ /local/path/
+
+Task: Archive directory "tata" to directory "tata2", compressing data during copy.
+Command: rsync -avz tata/ tata2/
+
+Task: Archive key.pub to directory .ssh in user's home directory on host specified by first parameter to function or script, using ssh to connect on port specified by second parameter to function or script, compress data during transmission.
+Command: rsync -avz --rsh="ssh -p$2" key.pub $1:~/.ssh/key.pub
+
+Task: Copy recursively "tata/" to "tata2/" and remove read, write, and execute permission for other
+Command: rsync -avz --chmod=o-rwx -p tata/ tata2/
+
+Task: Synchronize via ssh "user@source-server:/somedirA/" to "somedirB/" with compressed data during transmission and display progress
+Command: rsync -avz -e ssh --progress user@source-server:/somedirA/ somedirB/
+

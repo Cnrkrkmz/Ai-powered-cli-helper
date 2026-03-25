@@ -1,0 +1,8 @@
+# grep — ril examples
+
+Task: Finds recursively and following symlinks from root folder all files that contain "text-to-find-here" and prints files names.
+Command: grep -Ril "text-to-find-here" /
+
+Task: Recursively prints paths to all text file in folder (ignores binary files).
+Command: grep -RIl "" .
+

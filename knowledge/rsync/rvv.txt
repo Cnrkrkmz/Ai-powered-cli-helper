@@ -1,0 +1,14 @@
+# rsync — rvv examples
+
+Task: Recursively copy "/path/to/data/myappdata/*.txt" to "user@host:/remote/path/to/data/myappdata/"
+Command: rsync -rvv /path/to/data/myappdata/*.txt user@host:/remote/path/to/data/myappdata/
+
+Task: Recursively copy all ".txt" files to "user@remote.machine:/tmp/newdir/"
+Command: rsync -rvv *.txt user@remote.machine:/tmp/newdir/
+
+Task: Recursively copy directory "/path/to/data/myappdata" to "user@host:/remote/path/to/data/myappdata"
+Command: rsync -rvv /path/to/data/myappdata user@host:/remote/path/to/data/myappdata
+
+Task: Recursively copy directory "/path/to/data/myappdata" to "user@host:/remote/path/to/data/newdirname"
+Command: rsync -rvv --recursive /path/to/data/myappdata user@host:/remote/path/to/data/newdirname
+

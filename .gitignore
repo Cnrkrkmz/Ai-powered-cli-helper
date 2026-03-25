@@ -1,3 +1,8 @@
 config.json
 embeddings.json
 history.json
+IMPORVEMENT_PLAN.md
+# Dataset files
+nl2bash_data.txt
+nl2bash_pairs.txt
+nl2bash_full.json

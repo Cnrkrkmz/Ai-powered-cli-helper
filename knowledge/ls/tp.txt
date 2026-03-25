@@ -1,0 +1,14 @@
+# ls — tp examples
+
+Task: Removes all files but $1 newest ones from current folder.
+Command: ls -tp | grep -v '/' | tail -n +"$1" | xargs -I {} rm -- {}
+
+Task: Removes all files but 5 newest ones from current folder.
+Command: ls -tp | grep -v '/$' | tail -n +6 | tr '\n' '\0' | xargs -0 rm --
+
+Task: Removes all files but 5 newest ones from current folder.
+Command: ls -tp | grep -v '/$' | tail -n +6 | xargs -I {} rm -- {}
+
+Task: Removes all files from current folder but 5 newest ones, filtering out directories from initial search.
+Command: ls -tp | grep -v '/$' | tail -n +6 | xargs -d '\n' rm --
+

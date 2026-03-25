@@ -1,0 +1,29 @@
+# find — user examples
+
+Task: Change the ownership of all files in the current directory tree from root to www-data
+Command: find -user root -exec chown www-data {} \;
+
+Task: Find all files of the user with UID=1000
+Command: find -user 1000
+
+Task: Find all files/directories owned by user 'michel' under current directory
+Command: find -user michel
+
+Task: Find all files/directories that are owned by user 'eric' under current directory tree
+Command: find -user eric -print
+
+Task: Find all files/directories that are owned by user 'takuya' under current directory tree
+Command: find -user takuya
+
+Task: Find all of jzb's files
+Command: find -user jzb
+
+Task: Find all php files that belong to user 'takuya' and have been modified in the last 1 day
+Command: find -user takuya -name '*.php' -daystart -mtime -1
+
+Task: Search for all files owned by user www-data that are not larger than 100kb
+Command: find -user www-data -not -size +100k
+
+Task: Search for the files that are owned by user rooter or by user www-data
+Command: find -user root -o -user www-data
+

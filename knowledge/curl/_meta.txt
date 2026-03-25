@@ -1,0 +1,3 @@
+# DESCRIPTION: curl command usage examples from NL2Bash dataset
+# KEYWORDS: curl, general
+# FILES: general=general

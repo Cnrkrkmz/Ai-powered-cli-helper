@@ -1,0 +1,8 @@
+# rsync — aqz examples
+
+Task: Archive "_vim/" to "~/.vim" suppressing non-error messages and compressing data during transmission
+Command: rsync -aqz _vim/ ~/.vim
+
+Task: Archive "_vimrc" to "~/.vimrc" suppressing non-error messages and compressing data during transmission
+Command: rsync -aqz _vimrc ~/.vimrc
+

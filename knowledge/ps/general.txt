@@ -1,0 +1,47 @@
+# ps — general examples
+
+Task: Find process "terminal" displaying the searching process
+Command: ps aux | grep '[t]erminal'
+
+Task: Find the process id of mysql
+Command: ps -A|grep mysql
+
+Task: Find the process id of mysql
+Command: ps aux | grep mysql | grep -v grep
+
+Task: Finds PIDs of all running processes, gets executable binary of each process, and prints containing folder of each binary.
+Command: ps -A -o pid | xargs -I pid readlink "/proc/pid/exe" | xargs -I file dirname "file"
+
+Task: Finds binaries names in a list of running processes and prints containing folder of each binary.
+Command: ps aux | awk '{print $11}' | grep -x -e "/.*" | xargs -I file dirname "file"
+
+Task: Finds binaries names in a list of running processes and prints containing folder of each binary.
+Command: ps aux | awk '{print $11}' | grep -x -e "/.*" | xargs dirname
+
+Task: Finds binaries names in a list of running processes and prints containing folder of first 10 binaries.
+Command: ps aux | awk '{print $11}' | grep -x -e "/.*" | xargs dirname | head
+
+Task: Get a path name of a process id
+Command: ps -p 24297 -o comm --no-heading
+
+Task: Get the current shell's executable name from the output of 'ps'.
+Command: ps -p $$ | awk '$1 == PP {print $4}' PP=$$
+
+Task: Get the current shell's executable name from the output of 'ps'.
+Command: ps | grep `echo $$` | awk '{ print $4 }'
+
+Task: Immediately kill all child processes of parent process whose ID is specified by the variable PPID.
+Command: ps -o pid= --ppid $PPID | xargs kill -9
+
+Task: Immediately terminate all processes whose command or arguments contain 'amarok'.
+Command: ps aux | grep -ie amarok | awk '{print $2}' | xargs kill -9
+
+Task: Interactively page through a list of all processes running on the system - the arrow keys pan around, and the Q key quits.
+Command: ps aux | less -S
+
+Task: Kill process named "python csp_build.py".
+Command: ps aux | grep 'python csp_build.py' | head -1 | tr -s ' ' | cut -d " " -f2 | xargs kill
+
+Task: List PIDs of children processes
+Command: ps -o pid --no-headers --ppid $PARENT_PID
+

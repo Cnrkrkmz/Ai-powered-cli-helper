@@ -1,0 +1,11 @@
+# ls — hal examples
+
+Task: Prints long listing of content in a root folder, including hidden files, with human-readable sizes, and stores output to '/root/test.out' file.
+Command: ls -hal /root/ > /root/test.out
+
+Task: Prints long listing of content in a root folder, including hidden files, with human-readable sizes, and stores output to '/root/test.out' file.
+Command: ls -hal /root/ | sudo tee /root/test.out
+
+Task: Write output of "ls -hal /root/" to standard output and to "/root/test.out"
+Command: ls -hal /root/ | sudo tee /root/test.out
+

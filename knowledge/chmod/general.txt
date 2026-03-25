@@ -1,0 +1,47 @@
+# chmod — general examples
+
+Task: Add executable permission to "pretty-print"
+Command: chmod +x pretty-print
+
+Task: Add executable permission to "rr.sh"
+Command: chmod +x rr.sh
+
+Task: Add execute permission to "ComputeDate", "col", and "printdirections" for all users
+Command: chmod a+x ComputeDate col printdirections
+
+Task: Add execute permission to all files ending in ".sh"
+Command: chmod +x *.sh
+
+Task: Add group write permission to all files and directories in the current directory including hidden files and excluding ".."
+Command: chmod g+w $(ls -1a | grep -v '^..$')
+
+Task: Add group write permission to all files and directories in the current directory including hidden files and excluding ".."
+Command: chmod g+w .[^.]* ..?*
+
+Task: Add group write permission to all files matching "*" or "...*"
+Command: chmod g+w * ...*
+
+Task: Adds execution permissions on a script ./etc/bash_completion within Homebrew home folder path.
+Command: chmod +x $(brew --prefix)/etc/bash_completion
+
+Task: Allow all users to execute "myscript.sh"
+Command: chmod a+x myscript.sh
+
+Task: Allow all users to execute '$pathToShell"myShell.sh"'
+Command: chmod a+x $pathToShell"myShell.sh"
+
+Task: Change permissions of ".bash_logout", ".bashrc", and ".profile" to 444
+Command: chmod 444 .bash_logout .bashrc .profile
+
+Task: Change permissions of "/usr/bin/wget" to 777
+Command: chmod 777 /usr/bin/wget
+
+Task: Change permissions of directory "/home/sshtunnel/" to 555
+Command: chmod 555 /home/sshtunnel/
+
+Task: Copy permissions from "version2/somefile" to "version1/somefile"
+Command: chmod --reference version2/somefile version1/somefile
+
+Task: Find all *.php files under current directory and change their permission to 640
+Command: chmod 640 $(find . -name *.php)
+

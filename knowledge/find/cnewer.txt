@@ -1,0 +1,8 @@
+# find — cnewer examples
+
+Task: find all the files in the current directory and sub-directories whose status was changed after /etc/fstab was modified
+Command: find -cnewer /etc/fstab
+
+Task: find all the files which have been changed after the modification of a file.
+Command: find -cnewer /etc/fstab
+

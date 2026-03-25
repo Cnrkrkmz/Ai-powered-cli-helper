@@ -1,0 +1,3 @@
+# DESCRIPTION: rsync command usage examples from NL2Bash dataset
+# KEYWORDS: rsync, ahvz, aqz, av, ave, avlzp, avr, avz, avzru, azp, chavzp, general, nvral, rtuv, rvv, rvz, zvr
+# FILES: ahvz=ahvz | aqz=aqz | av=av | ave=ave | avlzp=avlzp | avr=avr | avz=avz | avzru=avzru | azp=azp | chavzp=chavzp | general=general | nvral=nvral | rtuv=rtuv | rvv=rvv | rvz=rvz | zvr=zvr

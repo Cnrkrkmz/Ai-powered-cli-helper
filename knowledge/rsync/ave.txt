@@ -1,0 +1,8 @@
+# rsync — ave examples
+
+Task: Archive "fileToCopy" to "/some/nonExisting/dirToCopyTO" on host "ssh.myhost.net" via ssh
+Command: rsync -ave ssh fileToCopy ssh.myhost.net:/some/nonExisting/dirToCopyTO
+
+Task: Download "Louis Theroux's LA Stories" using rsync over ssh
+Command: rsync -ave ssh '"Louis Theroux"''"'"'"'"''"s LA Stories"'
+

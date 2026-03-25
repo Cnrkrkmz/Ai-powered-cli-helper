@@ -1,0 +1,8 @@
+# tar — cvf examples
+
+Task: Archive and compress all files in "data" directory into "data.tar.gz"
+Command: tar -cvf - data/* | gzip > data.tar.gz
+
+Task: Search for files/directories with the case insensitive pattern anaconda.* in var/log directory and create an archive (somefile.tar) of all the files found
+Command: tar -cvf file.tar `find var/log/ -iname "anaconda.*"`
+

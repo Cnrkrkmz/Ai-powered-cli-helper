@@ -1,0 +1,47 @@
+# rsync — av examples
+
+Task: Archive "./htmlguide" to "~/src/" with resolved symbolic links and delete any extraneous files from "~/src/" not found in "./htmlguide"
+Command: rsync -av --copy-dirlinks --delete ../htmlguide ~/src/
+
+Task: Archive "/home/user1" to "wobgalaxy02:/home/user1" excluding hidden files
+Command: rsync -av /home/user1 wobgalaxy02:/home/user1
+
+Task: Archive "/my/dir" on host "server" as user "user" to the current local directory excluding files ending in ".svn"
+Command: rsync -av --exclude '*.svn' user@server:/my/dir .
+
+Task: Archive "/path/to/files" to "/path" on host "user@targethost" with elevated permission on the remote host
+Command: rsync -av --rsync-path="sudo rsync" /path/to/files user@targethost:/path
+
+Task: Archive "/path/to/files" to "user@targethost:/path"
+Command: rsync -av /path/to/files user@targethost:/path
+
+Task: Archive "<SOURCE_DIR>" to "rsyncuser@192.168.1.110:/srv/www/prj112/myfolder"
+Command: rsync -av <SOURCE_DIR> rsyncuser@192.168.1.110:/srv/www/prj112/myfolder
+
+Task: Archive "src-dir" to "dest-dir" on "remote-user@remote-host" and delete any files in "dest-dir" not found in "src-dir"
+Command: rsync -av --delete src-dir remote-user@remote-host:dest-dir
+
+Task: Archive all files specified on standard input under "/path/to/files" to "/path" on host "targethost" as user "user" with escalated privileges
+Command: rsync -av --files-from=- --rsync-path="sudo rsync" /path/to/files user@targethost:/path
+
+Task: Archive any files changed in the last day from "remote_host" to "local_dir"
+Command: rsync -av remote_host:'$(find logs -type f -ctime -1)' local_dir
+
+Task: Archive directory "." to "server2::sharename/B"
+Command: rsync -av . server2::sharename/B
+
+Task: Archive directory specified by variable "myFolder" to current directory.
+Command: rsync -av $myFolder .
+
+Task: Archive showing progress "sourcefolder" to "/destinationfolder" excluding "thefoldertoexclude"
+Command: rsync -av --progress sourcefolder /destinationfolder --exclude thefoldertoexclude
+
+Task: Archive showing progress all files in "/media/2TB\ Data/data/music/" to "/media/wd/network_sync/music/" excluding files matching "*.VOB", "*.avi", "*.mkv", "*.ts", "*.mpg", "*.iso", "*ar", "*.vob", "*.BUP", "*.cdi", "*.ISO", "*.shn", "*.MPG", "*.AVI", "*.DAT", "*.img", "*.nrg", "*.cdr", "*.bin", "*.MOV", "*.goutputs*", "*.flv", "*.mov", "*.m2ts", "*.cdg", "*.IFO", "*.asf", and "*.ite"
+Command: rsync -av --progress --exclude=*.VOB --exclude=*.avi --exclude=*.mkv --exclude=*.ts --exclude=*.mpg --exclude=*.iso --exclude=*ar --exclude=*.vob --exclude=*.BUP --exclude=*.cdi --exclude=*.ISO --exclude=*.shn --exclude=*.MPG --exclude=*.AVI --exclude=*.DAT --exclude=*.img --exclude=*.nrg --exclude=*.cdr --exclude=*.bin --exclude=*.MOV --exclude=*.goutputs* --exclude=*.flv --exclude=*.mov --exclude=*.m2ts --exclude=*.cdg --exclude=*.IFO --exclude=*.asf --exclude=*.ite /media/2TB\ Data/data/music/* /media/wd/network_sync/music/
+
+Task: Copy "source" recursively to "destination" excluding "path1/to/exclude" and "path2/to/exclude"
+Command: rsync -av --exclude='path1/to/exclude' --exclude='path2/to/exclude' source destination
+
+Task: Synchronize "/home/user1/" to "wobgalaxy02:/home/user1/" including hidden files
+Command: rsync -av /home/user1/ wobgalaxy02:/home/user1/
+

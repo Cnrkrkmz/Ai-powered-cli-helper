@@ -1,0 +1,47 @@
+# find — iname examples
+
+Task: Calculate the md5sum of all the files with name "MyCProgram.c", ignoring case
+Command: find -iname "MyCProgram.c" -exec md5sum {} \;
+
+Task: Exclude directory from find . command
+Command: find -iname example.com | grep -v beta
+
+Task: Execute md5sum command on files found by the find command
+Command: find -iname "MyCProgram.c" -exec md5sum {} \;
+
+Task: Find all *weservice* (case insensitive) files under current directory and restart the services provided by them
+Command: find -iname '*weservice*'|xargs -I {} service {} restart
+
+Task: Find all .c and .C files in the current directory tree that contain "main(" and copy them to directory test1/
+Command: find -iname “*.c” -exec grep -l ‘main(‘ {} \; -a -exec cp {} test1/ \;
+
+Task: Find all filenames ending with .c in the current directory tree, case insensitive
+Command: find -iname "*.c"
+
+Task: Find all files matching pattern '.#*' in the current directory tree
+Command: find -iname '.#*'
+
+Task: Find all files named "MyCProgam.c" (ignoring the case) and calculate each file's md5sum.
+Command: find -iname "MyCProgram.c" -exec md5sum {} \;
+
+Task: Find all files with the name "MyProgram.c" in the current directory and its sub-directories while ignoring the case of the file name.
+Command: find -iname "MyCProgram.c"
+
+Task: Find all files/directories named 'query' (case insensitive) under current directory
+Command: find -iname "query"
+
+Task: Find all files/directories named 'query' (case insensitive) under current directory tree
+Command: find -iname "query"
+
+Task: Find all files/directories under current directory matching the case insensitive pattern 'pattern'
+Command: find -iname pattern
+
+Task: Find files using file-name
+Command: find -iname "MyCProgram.c"
+
+Task: Find the total size of files whose name begins with "file" within the current directory tree
+Command: find -iname 'file*' -exec du -cb {} + | grep total$ | cut -f1 | paste -sd+ - | bc
+
+Task: Locate all files in the current directory and below that have "testfile" in their names regardless of the case
+Command: find -iname "*TESTFILE*"
+

@@ -1,0 +1,47 @@
+# tar — general examples
+
+Task: Calculate the md5 sum of the tar archive of "dir"
+Command: tar c dir | md5sum
+
+Task: Copy the file foo.sh into /path/to/cotainer of the docker container
+Command: tar -c -C /path/on/local/machine . | docker cp - dvc:/path/on/container
+
+Task: Copy the file foo.sh into /tmp of the docker container
+Command: tar -c foo.sh | docker exec -i theDockerContainer /bin/tar -C /tmp -x
+
+Task: Create a compressed archive from "www" and split the contents into files of at most 1073741824 bytes and use prefix "www-backup.tar."
+Command: tar czf - www|split -b 1073741824 - www-backup.tar.
+
+Task: Create a compressed archive of "/home" and split the contents into files with at most 4000 MiB each and use prefix "/media/DRIVENAME/BACKUPNAME.tgz"
+Command: tar --one-file-system -czv /home | split -b 4000m - /media/DRIVENAME/BACKUPNAME.tgz
+
+Task: Create a tar archive of all regular files modified in the last 24 hours
+Command: tar cvf - `find . -mtime -1 -type f -print` > $archive.tar
+
+Task: Create compressed archive from "my_large_file_1" and "my_large_file_2" and split into files of size 1024 MiB with prefix "myfiles_split.tgz_"
+Command: tar cz my_large_file_1 my_large_file_2 | split -b 1024MiB - myfiles_split.tgz_
+
+Task: Extract tar.gz archive and go into the directory that would normally be created by extracting it.
+Command: tar xvf "$myarchive" && cd "${myarchive%.tar.gz}"
+
+Task: Print the sorted uniqe list of folders in compressed archive nginx-1.0.0.tar.gz
+Command: tar tf nginx-1.0.0.tar.gz | xargs dirname | sort | uniq
+
+Task: Split the output of "tar [your params]" into files of at most 500 MiB in size and use prefix "output_prefix"
+Command: tar [your params] |split -b 500m - output_prefix
+
+Task: Sum the total content size of the extracted files in "archive.tar.gz"
+Command: tar tzvf archive.tar.gz | sed 's/ \+/ /g' | cut -f3 -d' ' | sed '2,$s/^/+ /' | paste -sd' ' | bc
+
+Task: archive all files in a current directory modified in the last 30 days
+Command: tar czvf mytarfile.tgz `find . -mtime -30`
+
+Task: create a compressed archive in my_dir directory matching '.[^.]* ..?*' glob pattern
+Command: tar -C my_dir -zcvf my_dir.tar.gz .[^.]* ..?* *
+
+Task: create a compressed archive of a target directory excluding '<dir1>' and '<dir2>'
+Command: tar cfvz --exclude='<dir1>' --exclude='<dir2>' target.tgz target_dir
+
+Task: create a compressed archive with files newer than 1st of January 2014, 18:00:00.
+Command: tar -N '2014-02-01 18:00:00' -jcvf archive.tar.bz2 files
+

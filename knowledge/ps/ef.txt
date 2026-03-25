@@ -1,0 +1,23 @@
+# ps — ef examples
+
+Task: Get the path of running Apache
+Command: ps -ef | grep apache
+
+Task: Immediately terminate all processes whose command or arguments match "myProcessName"
+Command: ps -ef | grep myProcessName | grep -v grep | awk '{print $2}' | xargs kill -9
+
+Task: Kill all processes matching the string "myProcessName"
+Command: ps -ef | grep myProcessName | grep -v grep | awk '{print $2}' | xargs kill -9
+
+Task: List all processes with detailed information
+Command: ps -ef
+
+Task: Print current shell using process ID
+Command: ps  -ef | grep $$ | grep -v grep
+
+Task: Print information of the process running the current script as the current user
+Command: ps -ef | grep $0 | grep $(whoami)
+
+Task: Show all running processes with a name matching "postgres"
+Command: ps -ef | grep postgres
+

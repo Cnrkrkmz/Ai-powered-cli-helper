@@ -1,0 +1,14 @@
+# tar — czf examples
+
+Task: Archive the list of 1st level subdirectories in /fss/fin to /fss/fi/outfile.tar.gz
+Command: tar -czf /fss/fi/outfile.tar.gz `find /fss/fin -d 1 -type d -name "*" -print`
+
+Task: create a compressed archive excluding files matching a pattern
+Command: tar -czf backup.tar.gz --exclude=PATTERN1 --exclude=PATTERN2 ... /path/to/backup
+
+Task: create a compressed archive excluding the directories containing "exclude.tag"
+Command: tar -czf backup.tar.gz --exclude-tag-all=exclude.tag /path/to/backup
+
+Task: create an archive excluding files matching patterns listed in /path/to/exclude.txt
+Command: tar -czf backup.tar.gz -X /path/to/exclude.txt /path/to/backup
+

@@ -1,0 +1,14 @@
+# find — not examples
+
+Task: Find all files that aren't owned by user www-data
+Command: find -not -user www-data
+
+Task: Find all files/directories not with the name 'query_to_avoid' under current directory
+Command: find -not -name "query_to_avoid"
+
+Task: Find all files/directories under current directory tree excluding files/directories with name 'query_to_avoid'
+Command: find -not -name "query_to_avoid"
+
+Task: Locate all files in the current directory and below that do not have "testfileasdf" in their names
+Command: find -not -name "*testfileasdf*"
+

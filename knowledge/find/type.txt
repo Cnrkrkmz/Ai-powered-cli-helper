@@ -1,0 +1,47 @@
+# find — type examples
+
+Task: Append ".txt" to all filenames in the current directory tree
+Command: find -type f | xargs -I {} mv {} {}.txt
+
+Task: Convert *.au files to *.wav files using `sox'
+Command: find -type f -name '*.au' | awk '{printf "%s %s\n",$0,$0".wav" }' | xargs sox
+
+Task: Convert *.au files to *.wav files using `sox'
+Command: find -type f -name '*.au' | awk '{printf "sox %s %s\n",$0,$0".wav" }' | bash
+
+Task: Count case insensitive absolute paths recursively from the current directory
+Command: find -type f  -exec readlink -m {} \; | gawk 'BEGIN{FS="/";OFS="/"}{$NF=tolower($NF);print}' | uniq -c
+
+Task: Counts all files in a current folder and subfolders.
+Command: find -type f -exec printf '\n' \; | wc -l
+
+Task: Counts all files in a current folder and subfolders.
+Command: find -type f -printf '\n' | wc -l
+
+Task: Delete all empty directories and directories that contain only empty directories under current directory
+Command: find -type d -empty -exec rmdir -vp --ignore-fail-on-non-empty {} +
+
+Task: Delete all empty directories and directories that contain only empty directories under current directory
+Command: find -type d -empty -exec rmdir -vp --ignore-fail-on-non-empty {} `;`
+
+Task: Delete all empty directories in the current directory tree
+Command: find -type d -empty -exec rmdir -vp --ignore-fail-on-non-empty {} +
+
+Task: Delete all empty directories in the current directory tree
+Command: find -type d -empty -exec rmdir -vp --ignore-fail-on-non-empty {} `;`
+
+Task: Delete all empty directories under current directory
+Command: find -type d -empty
+
+Task: Display the biggest file sizes only
+Command: find -type f -exec du -Sh {} + | sort -rh | head -n 5
+
+Task: Find UTF-8 files with BOM
+Command: find -type f -print0 | xargs -0 grep -l `printf '^\xef\xbb\xbf'` | sed 's/^/found BOM in: /'
+
+Task: Find all 'test' directories in the current directory tree
+Command: find -type d -a -name test
+
+Task: Find all 'test' directories in the current directory tree and remove them
+Command: find -type d -a -name test|xargs rm -r
+

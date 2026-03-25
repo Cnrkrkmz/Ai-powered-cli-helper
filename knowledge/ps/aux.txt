@@ -1,0 +1,8 @@
+# ps — aux examples
+
+Task: Prints a process tree for each process of user 'username'.
+Command: ps -aux | grep ^username | awk '{print $2}' | xargs pstree
+
+Task: Prints process tree for each process owned by user 'username'.
+Command: ps -aux |  awk '/^username/{print $2}' | xargs pstree
+

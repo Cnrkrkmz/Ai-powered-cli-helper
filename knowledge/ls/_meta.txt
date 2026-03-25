@@ -1,0 +1,3 @@
+# DESCRIPTION: ls command usage examples from NL2Bash dataset
+# KEYWORDS: ls, al, general, hal, ld, lr, tp, tr
+# FILES: al=al | general=general | hal=hal | ld=ld | lr=lr | tp=tp | tr=tr

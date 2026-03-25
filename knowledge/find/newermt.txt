@@ -1,0 +1,11 @@
+# find — newermt examples
+
+Task: List all files in the current directory tree that were last modified between "mar 03, 2010 09:00" and "mar 11, 2010"
+Command: find -newermt "mar 03, 2010 09:00" -not -newermt "mar 11, 2010" -ls
+
+Task: List all files in the current directory tree that were last modified on the 3rd of March, 2010 or later
+Command: find -newermt "mar 03, 2010" -ls
+
+Task: List all files in the current directory tree that were last modified yesterday or later
+Command: find -newermt yesterday -ls
+

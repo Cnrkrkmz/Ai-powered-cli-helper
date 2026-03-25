@@ -1,0 +1,47 @@
+# chown — general examples
+
+Task: Change file owner and group of "/path/to/yourapp" to root and print a diagnostic
+Command: chown -v root:root /path/to/yourapp
+
+Task: Change onwer of "file" to "user_name"
+Command: chown user_name file
+
+Task: Change owner and group of "script.sh" to "root"
+Command: chown root:root script.sh
+
+Task: Change owner of "folder" to "user_name"
+Command: chown user_name folder
+
+Task: Change owner to "$1" and group to "httpd" of ".htaccess"
+Command: chown $1:httpd .htaccess
+
+Task: Change owner to "$FUID" and group to "$FGID" of "$FILE2"
+Command: chown $FUID:$FGID "$FILE2"
+
+Task: Change owner to "$user" and group to "$group" of "$file"
+Command: chown -- "$user:$group" "$file"
+
+Task: Change the group of "myfile" to "friends"
+Command: chown :friends myfile
+
+Task: Change the owner and group of "it" to "root"
+Command: chown root:root it
+
+Task: Change the owner of "$JBOSS_CONSOLE_LOG" to "$JBOSS_USER"
+Command: chown $JBOSS_USER $JBOSS_CONSOLE_LOG
+
+Task: Change the owner of "destination_dir" to "user"
+Command: chown user destination_dir
+
+Task: Change the owner of the directory name of "$JBOSS_PIDFILE" to "${JBOSS_USER}" and always return successfully
+Command: chown ${JBOSS_USER}: $(dirname $JBOSS_PIDFILE) || true
+
+Task: Change the owner to "owner" and group to "nobody" of "public_html"
+Command: chown owner:nobody public_html
+
+Task: Change the owner to "root" and group to "specialusers" of "dir1"
+Command: chown root:specialusers dir1
+
+Task: Change the owner to "user" and group to "group" of files "file ..."
+Command: chown user:group file ...
+

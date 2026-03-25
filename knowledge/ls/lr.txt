@@ -1,0 +1,14 @@
+# ls — lr examples
+
+Task: Prints long recursive listing of all content of a root folder, appending output to 'output.file'.
+Command: ls -lR / | tee -a output.file
+
+Task: Prints long recursive listing of all content of a root folder, saving output to 'output.file'.
+Command: ls -lR / | tee output.file
+
+Task: Write output of "ls -lR /" to standard output and append to "output.file"
+Command: ls -lR / | tee -a output.file
+
+Task: Write output of "ls -lR /" to standard output and to "output.file"
+Command: ls -lR / | tee output.file
+

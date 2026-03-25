@@ -1,0 +1,17 @@
+# find — exec examples
+
+Task: Execute "some_script" on all files in the current directory tree
+Command: find -exec some_script {} \;
+
+Task: Find all files/directories in current directory and run the command 'command' on each of them invoking the command as few times as possible
+Command: find -exec command {} +
+
+Task: Find all files/directories under current directory and run <script> for each of them
+Command: find -exec <script> {}\;
+
+Task: Remove all files under current directory
+Command: find -exec rm '{}' +
+
+Task: display a long list of the files in the current folder which have the word fuddel in all the files in the current folder and then search for the word fiddel in the previously matched files
+Command: find -exec grep -q fuddel {} ";" -exec grep -q fiddel {} ";" -ls
+

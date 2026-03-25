@@ -1,0 +1,3 @@
+# DESCRIPTION: chown command usage examples from NL2Bash dataset
+# KEYWORDS: chown, general
+# FILES: general=general

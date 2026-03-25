@@ -1,0 +1,47 @@
+# rsync — general examples
+
+Task: Archive "/home/path" to "path" on host "server" showing progress and statistics and remove files in the destination not found in the source
+Command: rsync -a --stats --progress --delete /home/path server:path
+
+Task: Archive "/top/a/b/c/d" to host "remote" using relative path names
+Command: rsync -a --relative /top/a/b/c/d remote:/
+
+Task: Archive "blanktest/" to "test/" deleting any files in the destination not found in the source
+Command: rsync -a --delete blanktest/ test/
+
+Task: Archive "myfile" to "/foo/bar/" and create directory "/foo/bar/" if "/foo/" exists
+Command: rsync -a myfile /foo/bar/
+
+Task: Archive "path/to/working/copy" to "path/to/export" excluding files or directories named ".svn"
+Command: rsync -a --exclude .svn path/to/working/copy path/to/export
+
+Task: Archive "src" to "dst" updating files existing in "dst"
+Command: rsync -a -v src dst
+
+Task: Archive "src" to "dst" without overwriting existing files in "dst"
+Command: rsync -a -v --ignore-existing src dst
+
+Task: Archive all files (not directories) in "folder1" to "copy_of_folder1" specifying to include files info.txt and data.zip
+Command: rsync -a -f"+ info.txt" -f"+ data.zip" -f'-! */' folder1/ copy_of_folder1/
+
+Task: Archive directory "symdir" to "symdir_output" preserving symbolic links.
+Command: rsync symdir/ symdir_output/ -a --copy-links -v
+
+Task: Archive files (not directories) in "sorce_dir" to "target_dir"
+Command: rsync -a --filter="-! */" sorce_dir/ target_dir/
+
+Task: Archive files in "/mnt/source-tmp" to "/media/destination"
+Command: rsync -a /mnt/source-tmp /media/destination/
+
+Task: Copy "*.cc", "*.h", and "SConstruct" to "rsync://localhost:40001/bledge_ce" using blocking IO
+Command: rsync --blocking-io *.cc *.h SConstruct rsync://localhost:40001/bledge_ce
+
+Task: Copy "/Users/username/path/on/machine/" to "username@server.ip.address.here:/home/username/path/on/server/" and convert encoding from UTF-8-MAC to UTF-8
+Command: rsync --iconv=UTF-8-MAC,UTF-8 /Users/username/path/on/machine/ 'username@server.ip.address.here:/home/username/path/on/server/'
+
+Task: Copy "/home/username/path/on/server/" to "username@your.ip.address.here:/Users/username/path/on/machine/" and convert encoding from UTF-8 to UTF-8-MAC
+Command: rsync --iconv=UTF-8,UTF-8-MAC /home/username/path/on/server/ 'username@your.ip.address.here:/Users/username/path/on/machine/'
+
+Task: Copy "/new/x/y/z/" over the network to "user@remote:/pre_existing/dir/" preserving the directory hierarchy
+Command: rsync -a --relative /new/x/y/z/ user@remote:/pre_existing/dir/
+

@@ -1,0 +1,8 @@
+# grep — ff examples
+
+Task: From the list of words (one per line) in list1.txt, display the number of occurrences of this word in list2.txt and sort the results from highest to lowest count.
+Command: grep -Ff list1.txt list2.txt | sort | uniq -c | sort -n
+
+Task: Print the most repeated line in "list2.txt" that exists in "list1.txt" prefixed by the number of occurrences
+Command: grep -Ff list1.txt list2.txt | sort | uniq -c | sort -n | tail -n1
+

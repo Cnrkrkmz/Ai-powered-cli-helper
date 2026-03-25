@@ -1,0 +1,8 @@
+# rsync — avlzp examples
+
+Task: Archive "/path/to/files" on host "remotemachine" authentifying as user "user" and compressing data during transmission, copy symlinks as symlinks.
+Command: rsync -avlzp user@remotemachine:/path/to/files /path/to/this/folder
+
+Task: Archive "/path/to/sfolder" to "name@remote.server:/path/to/remote/dfolder" compressing the data during transmission
+Command: rsync -avlzp /path/to/sfolder name@remote.server:/path/to/remote/dfolder
+

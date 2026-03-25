@@ -1,0 +1,47 @@
+# curl — general examples
+
+Task: Counts number of lines returned by curl request.
+Command: curl yahoo.com --silent | wc -l
+
+Task: Download "http://archive.ubuntu.com/ubuntu/pool/universe/s/splint/splint_3.1.2.dfsg1-2.diff.gz", unzip it, and view the output in "less"
+Command: curl -s 'http://archive.ubuntu.com/ubuntu/pool/universe/s/splint/splint_3.1.2.dfsg1-2.diff.gz' | gunzip -dc | less
+
+Task: Download "http://www.multitran.ru/c/m.exe?CL=1&s=hello&l1=1" and convert encoding to "windows-1251" and print only printable characters
+Command: curl 'http://www.multitran.ru/c/m.exe?CL=1&s=hello&l1=1' | iconv -f windows-1251 | tr -dc '[:print:]'
+
+Task: Download "https://s3.amazonaws.com/sampletest/sample.tar.gz", unzip it, and untar it replacing filenames with "old" to "new"
+Command: curl https://s3.amazonaws.com/sampletest/sample.tar.gz | gunzip | pax -r -s "/old/new/"
+
+Task: Grab a gzipped text file from the web and display its decompressed content, interactively paging through the output.
+Command: curl -s 'http://archive.ubuntu.com/ubuntu/pool/universe/s/splint/splint_3.1.2.dfsg1-2.diff.gz' | gunzip -dc | less
+
+Task: download a file "http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip" using cookies "oraclelicense=accept-securebackup-cookie"
+Command: curl -L -C - -b "oraclelicense=accept-securebackup-cookie" -O http://download.oracle.com/otn-pub/java/jce/8/jce_policy-8.zip
+
+Task: download content from "http://127.0.0.1:8000" and output to "index.html"
+Command: curl http://127.0.0.1:8000 -o index.html
+
+Task: download content from "http://example.com/textfile.txt" and output to "textfile.txt"
+Command: curl http://example.com/textfile.txt -o textfile.txt
+
+Task: download content from "http://page.that.serves.json.com/json/" and format it as json
+Command: curl -s http://page.that.serves.json.com/json/ | json_xs
+
+Task: download content from "http://search.twitter.com/search.json?q=node.js" and format it as json
+Command: curl -s http://search.twitter.com/search.json?q=node.js | json
+
+Task: download contents from  "http://url" using a proxy server
+Command: curl -x http://proxy_server:proxy_port --proxy-user username:password -L http://url
+
+Task: download contents from "http://example.com/" using a socks5 proxy "125.119.175.48:8909"
+Command: curl --socks5 125.119.175.48:8909 http://example.com/
+
+Task: download contents from "http://www.example.com" using a proxy server
+Command: curl http://www.example.com --proxy http://125.119.175.48:8909
+
+Task: download contents from "https://raw.github.com/creationix/nvm/master/install.sh" and execute
+Command: curl https://raw.github.com/creationix/nvm/master/install.sh | sh
+
+Task: download contents from "https://www.npmjs.com/install.sh" and execute
+Command: curl https://www.npmjs.com/install.sh | sh
+

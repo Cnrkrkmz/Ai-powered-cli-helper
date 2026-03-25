@@ -1,0 +1,11 @@
+# find — empty examples
+
+Task: Find files that are empty
+Command: find -empty -type -f
+
+Task: Find the empty directories and files under current directory
+Command: find -empty
+
+Task: Print the empty directories and files under current directory
+Command: find -empty
+

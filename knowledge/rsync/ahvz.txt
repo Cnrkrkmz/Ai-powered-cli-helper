@@ -1,0 +1,8 @@
+# rsync — ahvz examples
+
+Task: Archive "/path/to/sfolder" to "name@remote.server:/path/to/remote/dfolder" preserving hard links and compressing the data during transmission
+Command: rsync -aHvz /path/to/sfolder name@remote.server:/path/to/remote/dfolder
+
+Task: Archive "/path/to/sfolder/" to "name@remote.server:/path/to/remote/dfolder" preserving hard links and compressing the data during transmission
+Command: rsync -aHvz /path/to/sfolder/ name@remote.server:/path/to/remote/dfolder
+

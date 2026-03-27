@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultOllamaURL  = "http://localhost:11434/api/generate"
-	defaultModel      = "qwen2.5-coder:7b"
+	defaultModel      = "granite-code:8b"  // Granite Code 8B: Best balance of speed and quality for CLI tasks
 	historyFile       = "history.json"
 	configFile        = "config.json"
 	trainingDataFile  = "training_data.json"
@@ -337,16 +337,18 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 		meta := tools[detectedTool]
 		toolContext = loadSubFileContext(meta, subFile)
 	}
-	if toolContext == "" {
-		toolContext = gatherAllGeneralSections(tools)
-	}
+	// Removed gatherAllGeneralSections fallback for better performance
+	// Model will use its parametric knowledge when no specific context matches
 
 	// ── Adım 3: Komut üret ───────────────────────────────────────────────────
 	backend := "local"
 	if useCloud {
 		backend = "cloud"
 	}
+	
+	// Use model from config (no automatic routing)
 	model := resolveModel(cfg, useCloud, true)
+	
 	fmt.Printf("🤖 [%s/%s] komut üretiliyor...\n\n", backend, model)
 
 	t2 := time.Now()
@@ -513,7 +515,7 @@ func askOllamaStream(ollamaURL, model, prompt string, numPredict int) string {
 		Options: map[string]interface{}{
 			"temperature": 0.1,
 			"num_predict": numPredict,
-			"stop":        []string{"\n\n", "---"},
+			// Removed stop sequences - let model complete the command fully
 		},
 	}
 
@@ -983,12 +985,15 @@ func buildNLPrompt(lang, toolContext, detectedTool string, query string) string 
 	}
 
 	if lang == "en" {
-		return fmt.Sprintf(`You are an expert system engineer.
-Generate the correct terminal command for the given task.
-Rules:
-1. Output ONLY the command. No explanation, no markdown, no backticks.
-2. Use the reference info strictly. Do not invent flags that are not listed.
-3. For unknown values (passwords, domains, IPs) use <PLACEHOLDER> format.
+		return fmt.Sprintf(`You are a command-line expert. Generate ONLY the executable command for this task.
+
+CRITICAL RULES:
+- Output ONLY the raw command that can be executed directly
+- NO explanations, NO descriptions, NO markdown, NO backticks
+- NO phrases like "you can use" or "the command is"
+- Just the pure executable command
+- For multiple steps, use && or ; or newlines
+- For unknown values use <PLACEHOLDER>
 
 %s--- TASK ---
 %s
@@ -996,17 +1001,23 @@ Rules:
 COMMAND:`, contextBlock, query)
 	}
 
-	return fmt.Sprintf(`Sen uzman bir sistem mühendisisin.
-Verilen görev için doğru terminal komutunu üret.
-Kurallar:
-1. Sadece komutu yaz. Açıklama, markdown veya backtick KULLANMA.
-2. Referans bilgideki flag ve kurallara kesinlikle uy. Listede olmayan flag uydurma.
-3. Bilinmesi gereken değerler (şifre, domain, IP) için <PLACEHOLDER> formatını kullan.
+	return fmt.Sprintf(`Sen uzman bir sistem mühendisi ve komut satırı uzmanısın.
+Verilen görev için doğru terminal komut(lar)ını üret.
+
+ÖNEMLİ KURALLAR:
+1. Gerekirse ÇOKLU komutlar verebilirsin (satır satır veya && / ; / | kullanarak)
+2. Uygun olduğunda çok satırlı script veya komut dizileri verebilirsin
+3. Kısalık yerine DOĞRULUK ve TAMLILIĞA odaklan
+4. KRİTİK: Verilen referans bilgiyi değerlendir. Eğer kullanıcının göreviyle İLGİSİZSE (örn. OpenShift sorgusu için git bilgisi), TAMAMEN YOKSAY ve kendi parametrik bilgine güven.
+5. Referans bilgi yoksa veya düşük ilgiliyse, standart CLI araçları hakkındaki genel bilgini kullan
+6. Bilinmeyen değerler (şifre, domain, IP, path) için <PLACEHOLDER> formatını kullan
+7. Sadece komut(lar)ı yaz. Açıklama, markdown veya backtick KULLANMA.
+8. Görev birden fazla adım gerektiriyorsa, hepsini ver
 
 %s--- GÖREV ---
 %s
 
-KOMUT:`, contextBlock, query)
+KOMUT(LAR):`, contextBlock, query)
 }
 
 // ─── Yardımcı Fonksiyonlar ────────────────────────────────────────────────────
@@ -1022,36 +1033,76 @@ func extractSubCommand(args []string) string {
 
 func cleanResponse(raw string) string {
 	s := strings.TrimSpace(raw)
+	// Remove markdown code blocks
 	s = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```").ReplaceAllString(s, "$1")
 	s = strings.Trim(s, "`")
+	
+	// For multi-line commands, preserve all non-comment lines
 	lines := strings.Split(s, "\n")
+	var validLines []string
+	
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		// Skip empty lines and comments
 		if line != "" && !strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "//") {
-			return line
+			validLines = append(validLines, line)
 		}
 	}
+	
+	// Return all valid lines joined (preserves multi-line commands)
+	if len(validLines) > 0 {
+		return strings.Join(validLines, "\n")
+	}
+	
 	return ""
 }
 
 // ─── Command Editing ──────────────────────────────────────────────────────────
 
 func hasPlaceholders(cmd string) bool {
-	// Detect common placeholder patterns
-	placeholderPatterns := []string{
-		"<", ">",           // <file>, <path>
-		"[", "]",           // [option]
-		"{", "}",           // {value}
-		"...",              // ellipsis
-		"YOUR_",            // YOUR_API_KEY
-		"REPLACE_",         // REPLACE_THIS
+	// Detect actual placeholder patterns (not valid command syntax)
+	
+	// Check for <PLACEHOLDER> style (our format)
+	if strings.Contains(cmd, "<PLACEHOLDER>") {
+		return true
 	}
 	
-	for _, pattern := range placeholderPatterns {
-		if strings.Contains(cmd, pattern) {
+	// Check for <word> patterns (but exclude valid shell redirections and comparisons)
+	// Valid: <file.txt (input redirect), >/dev/null (output redirect), [[ $a < $b ]]
+	// Invalid: <username>, <path>, <value>
+	anglePattern := regexp.MustCompile(`<[A-Za-z_][A-Za-z0-9_]*>`)
+	if anglePattern.MatchString(cmd) {
+		return true
+	}
+	
+	// Check for {PLACEHOLDER} or {variable} style (but exclude valid bash ${var})
+	// Valid: ${var}, ${var:-default}
+	// Invalid: {username}, {path}
+	bracePattern := regexp.MustCompile(`\{[A-Z_][A-Z0-9_]*\}`)
+	if bracePattern.MatchString(cmd) {
+		return true
+	}
+	
+	// Check for common placeholder prefixes
+	placeholderPrefixes := []string{
+		"YOUR_",
+		"REPLACE_",
+		"CHANGE_",
+		"INSERT_",
+		"ADD_",
+	}
+	
+	for _, prefix := range placeholderPrefixes {
+		if strings.Contains(strings.ToUpper(cmd), prefix) {
 			return true
 		}
 	}
+	
+	// Check for ellipsis (...)
+	if strings.Contains(cmd, "...") {
+		return true
+	}
+	
 	return false
 }
 

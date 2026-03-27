@@ -4,7 +4,7 @@ history.json
 training_data.json
 IMPROVEMENT_PLAN.md
 TRAINING_DATA_COLLECTION.md
-COMMAND_EDITING_FEATURES.md
+go.mod
 # Dataset files
 nl2bash_data.txt
 nl2bash_pairs.txt

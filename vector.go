@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -70,7 +71,18 @@ const (
 	defaultEmbedModel  = "nomic-embed-text"
 	embeddingsFile     = "embeddings.json"
 	// Cosine similarity eşiği: bu değerin altındaki sonuçları görmezden gel
-	similarityThreshold = 0.3
+	// 0.75+ = yüksek ilgi, 0.5-0.75 = orta ilgi, <0.5 = düşük ilgi
+	// RAG best practice: 0.75 altındaki sonuçları modele gönderme
+	similarityThreshold = 0.75
+	// Query embedding cache boyutu
+	cacheMaxSize = 1000
+)
+
+// ─── Query Embedding Cache ────────────────────────────────────────────────────
+
+var (
+	queryEmbedCache = make(map[string][]float64)
+	cacheMutex      sync.RWMutex
 )
 
 // ─── Ana Fonksiyonlar ─────────────────────────────────────────────────────────
@@ -198,8 +210,8 @@ func SearchSimilar(ollamaURL, query string) SearchResult {
 		return SearchResult{Tool: "none"}
 	}
 
-	// Sorguyu vektörize et
-	queryVec, err := getEmbedding(ollamaURL, defaultEmbedModel, query)
+	// Sorguyu vektörize et (cache kullanarak)
+	queryVec, err := getEmbeddingCached(ollamaURL, defaultEmbedModel, query)
 	if err != nil {
 		// Embedding başarısız → keyword'e düş (caller halleder)
 		return SearchResult{Tool: "none"}
@@ -263,6 +275,44 @@ func IsIndexStale(ollamaURL string) bool {
 }
 
 // ─── Embedding ───────────────────────────────────────────────────────────────
+
+// getEmbeddingCached: Query embedding'i cache'den döner, yoksa hesaplar ve cache'e ekler
+func getEmbeddingCached(ollamaURL, model, text string) ([]float64, error) {
+	// Cache key olarak text kullan
+	cacheKey := text
+	
+	// Cache'de var mı kontrol et
+	cacheMutex.RLock()
+	if vec, ok := queryEmbedCache[cacheKey]; ok {
+		cacheMutex.RUnlock()
+		return vec, nil
+	}
+	cacheMutex.RUnlock()
+	
+	// Cache'de yok, hesapla
+	vec, err := getEmbedding(ollamaURL, model, text)
+	if err != nil {
+		return nil, err
+	}
+	
+	// Cache'e ekle
+	cacheMutex.Lock()
+	// Cache boyutu kontrolü - basit LRU: yarısını temizle
+	if len(queryEmbedCache) >= cacheMaxSize {
+		count := 0
+		for k := range queryEmbedCache {
+			delete(queryEmbedCache, k)
+			count++
+			if count >= cacheMaxSize/2 {
+				break
+			}
+		}
+	}
+	queryEmbedCache[cacheKey] = vec
+	cacheMutex.Unlock()
+	
+	return vec, nil
+}
 
 func getEmbedding(ollamaURL, model, text string) ([]float64, error) {
 	// Uzun metinleri kırp (nomic-embed-text max ~8192 token)

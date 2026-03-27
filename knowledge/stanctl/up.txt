@@ -1,0 +1,2 @@
+Task: install instana standard edition
+Command: stanctl up

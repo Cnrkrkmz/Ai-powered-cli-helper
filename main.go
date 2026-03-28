@@ -340,6 +340,15 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 	// Removed gatherAllGeneralSections fallback for better performance
 	// Model will use its parametric knowledge when no specific context matches
 
+	// ── Adım 2.5: Directory context yükle ─────────────────────────────────────
+	dirContext := gatherDirectoryContext()
+	dirContextStr := formatDirectoryContextForPrompt(dirContext)
+	
+	// Debug: Show directory context
+	if dirContextStr != "" {
+		fmt.Printf("📁 Directory context:\n%s\n\n", dirContextStr)
+	}
+
 	// ── Adım 3: Komut üret ───────────────────────────────────────────────────
 	backend := "local"
 	if useCloud {
@@ -352,7 +361,7 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 	fmt.Printf("🤖 [%s/%s] komut üretiliyor...\n\n", backend, model)
 
 	t2 := time.Now()
-	prompt := buildNLPrompt(cfg.Language, toolContext, detectedTool, query)
+	prompt := buildNLPromptWithContext(cfg.Language, toolContext, dirContextStr, detectedTool, query)
 	suggestedCmd := askLLM(cfg, prompt, 400, useCloud)
 	t3 := time.Since(t2)
 
@@ -513,9 +522,9 @@ func askOllamaStream(ollamaURL, model, prompt string, numPredict int) string {
 		Prompt: prompt,
 		Stream: true,
 		Options: map[string]interface{}{
-			"temperature": 0.1,
+			"temperature": 0.0,  // More deterministic
 			"num_predict": numPredict,
-			// Removed stop sequences - let model complete the command fully
+			"stop":        []string{"\n\n", "Replace", "Make sure", "Note:", "This command"},
 		},
 	}
 
@@ -975,28 +984,31 @@ DÜZELTİLMİŞ KOMUT:`, contextPrompt, command, errorMsg)
 }
 
 func buildNLPrompt(lang, toolContext, detectedTool string, query string) string {
+	return buildNLPromptWithContext(lang, toolContext, "", detectedTool, query)
+}
+
+func buildNLPromptWithContext(lang, toolContext, dirContext, detectedTool string, query string) string {
 	contextBlock := ""
 	if toolContext != "" {
 		label := strings.ToUpper(detectedTool)
 		if detectedTool == "none" || detectedTool == "" {
 			label = "GENEL"
 		}
-		contextBlock = fmt.Sprintf("--- REFERANS BİLGİ (%s) ---\n%s\n\n", label, toolContext)
+		contextBlock = fmt.Sprintf("--- REFERENCE INFO (%s) ---\n%s\n\n", label, toolContext)
+	}
+	
+	// Add directory context if available
+	if dirContext != "" {
+		contextBlock += fmt.Sprintf("--- CURRENT DIRECTORY CONTEXT ---\n%s\n\n", dirContext)
 	}
 
 	if lang == "en" {
-		return fmt.Sprintf(`You are a command-line expert. Generate ONLY the executable command for this task.
-
-CRITICAL RULES:
-- Output ONLY the raw command that can be executed directly
-- NO explanations, NO descriptions, NO markdown, NO backticks
-- NO phrases like "you can use" or "the command is"
-- Just the pure executable command
-- For multiple steps, use && or ; or newlines
-- For unknown values use <PLACEHOLDER>
-
-%s--- TASK ---
+		return fmt.Sprintf(`%s--- TASK ---
 %s
+
+--- OUTPUT FORMAT ---
+Output ONLY the command. Nothing else. No explanations.
+Example: git add file.txt && git commit -m "message"
 
 COMMAND:`, contextBlock, query)
 	}
@@ -1101,6 +1113,21 @@ func hasPlaceholders(cmd string) bool {
 	// Check for ellipsis (...)
 	if strings.Contains(cmd, "...") {
 		return true
+	}
+	
+	// Check for example/generic paths that need customization
+	genericPaths := []string{
+		"/custom/",
+		"/path/to/",
+		"/your/",
+		"/example/",
+		"/tmp/example",
+	}
+	
+	for _, path := range genericPaths {
+		if strings.Contains(cmd, path) {
+			return true
+		}
 	}
 	
 	return false
@@ -1442,6 +1469,196 @@ func runIndex(cfg Config, verbose bool) {
 	}
 }
 
+
+// ─── Directory Context ────────────────────────────────────────────────────────
+
+// DirectoryContext: current directory structure and metadata
+type DirectoryContext struct {
+	WorkingDir    string
+	ProjectType   string   // "go", "python", "node", "unknown"
+	SourceFiles   []string // Main source code files
+	ConfigFiles   []string // Configuration files
+	HasGit        bool
+	GitIgnored    []string // Patterns from .gitignore
+	TotalFiles    int
+	Summary       string // Human-readable summary
+}
+
+// gatherDirectoryContext: analyzes current directory and returns structured context
+func gatherDirectoryContext() DirectoryContext {
+	ctx := DirectoryContext{
+		SourceFiles: []string{},
+		ConfigFiles: []string{},
+		GitIgnored:  []string{},
+	}
+	
+	// Get current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		ctx.WorkingDir = "."
+	} else {
+		ctx.WorkingDir = filepath.Base(cwd)
+	}
+	
+	// Read directory entries
+	entries, err := os.ReadDir(".")
+	if err != nil {
+		return ctx
+	}
+	
+	// Check for .gitignore
+	gitignorePatterns := []string{}
+	if gitignoreData, err := os.ReadFile(".gitignore"); err == nil {
+		ctx.HasGit = true
+		lines := strings.Split(string(gitignoreData), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line != "" && !strings.HasPrefix(line, "#") {
+				gitignorePatterns = append(gitignorePatterns, line)
+				ctx.GitIgnored = append(ctx.GitIgnored, line)
+			}
+		}
+	}
+	
+	// Categorize files
+	sourceExts := map[string]bool{
+		".go": true, ".py": true, ".js": true, ".ts": true,
+		".java": true, ".c": true, ".cpp": true, ".rs": true,
+		".rb": true, ".php": true, ".swift": true, ".kt": true,
+	}
+	
+	configFiles := map[string]bool{
+		"config.json": true, "config.yaml": true, "config.yml": true,
+		".env": true, "settings.json": true, "package.json": true,
+		"go.mod": true, "go.sum": true, "requirements.txt": true,
+		"Cargo.toml": true, "pom.xml": true, "build.gradle": true,
+	}
+	
+	projectTypeIndicators := map[string]string{
+		"go.mod":           "go",
+		"main.go":          "go",
+		"requirements.txt": "python",
+		"setup.py":         "python",
+		"package.json":     "node",
+		"Cargo.toml":       "rust",
+		"pom.xml":          "java",
+	}
+	
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		
+		name := entry.Name()
+		ctx.TotalFiles++
+		
+		// Skip hidden files except important ones
+		if strings.HasPrefix(name, ".") && name != ".gitignore" && name != ".env" {
+			continue
+		}
+		
+		// Check if gitignored
+		isIgnored := false
+		for _, pattern := range gitignorePatterns {
+			if matched, _ := filepath.Match(pattern, name); matched {
+				isIgnored = true
+				break
+			}
+		}
+		
+		// Detect project type
+		if projType, ok := projectTypeIndicators[name]; ok && ctx.ProjectType == "" {
+			ctx.ProjectType = projType
+		}
+		
+		// Categorize file
+		ext := filepath.Ext(name)
+		if sourceExts[ext] && !isIgnored {
+			ctx.SourceFiles = append(ctx.SourceFiles, name)
+		} else if configFiles[name] {
+			ctx.ConfigFiles = append(ctx.ConfigFiles, name)
+		}
+	}
+	
+	// Default project type
+	if ctx.ProjectType == "" {
+		if len(ctx.SourceFiles) > 0 {
+			// Guess from most common extension
+			extCount := make(map[string]int)
+			for _, f := range ctx.SourceFiles {
+				extCount[filepath.Ext(f)]++
+			}
+			maxExt := ""
+			maxCount := 0
+			for ext, count := range extCount {
+				if count > maxCount {
+					maxCount = count
+					maxExt = ext
+				}
+			}
+			switch maxExt {
+			case ".go":
+				ctx.ProjectType = "go"
+			case ".py":
+				ctx.ProjectType = "python"
+			case ".js", ".ts":
+				ctx.ProjectType = "node"
+			default:
+				ctx.ProjectType = "unknown"
+			}
+		} else {
+			ctx.ProjectType = "unknown"
+		}
+	}
+	
+	// Build summary
+	ctx.Summary = fmt.Sprintf("Directory: %s | Type: %s | Source files: %d | Config files: %d",
+		ctx.WorkingDir, ctx.ProjectType, len(ctx.SourceFiles), len(ctx.ConfigFiles))
+	
+	return ctx
+}
+
+// formatDirectoryContextForPrompt: creates a concise context string for the LLM
+func formatDirectoryContextForPrompt(ctx DirectoryContext) string {
+	if ctx.TotalFiles == 0 {
+		return ""
+	}
+	
+	var parts []string
+	
+	parts = append(parts, fmt.Sprintf("Current Directory: %s", ctx.WorkingDir))
+	parts = append(parts, fmt.Sprintf("Project Type: %s", ctx.ProjectType))
+	
+	if len(ctx.SourceFiles) > 0 {
+		// Limit to first 10 files to keep prompt concise
+		files := ctx.SourceFiles
+		if len(files) > 10 {
+			files = files[:10]
+		}
+		parts = append(parts, fmt.Sprintf("Source Files: %s", strings.Join(files, ", ")))
+		if len(ctx.SourceFiles) > 10 {
+			parts = append(parts, fmt.Sprintf("  (and %d more)", len(ctx.SourceFiles)-10))
+		}
+	}
+	
+	if len(ctx.ConfigFiles) > 0 {
+		parts = append(parts, fmt.Sprintf("Config Files: %s", strings.Join(ctx.ConfigFiles, ", ")))
+	}
+	
+	if ctx.HasGit {
+		parts = append(parts, "Git: initialized")
+		if len(ctx.GitIgnored) > 0 {
+			// Show first few gitignore patterns
+			patterns := ctx.GitIgnored
+			if len(patterns) > 5 {
+				patterns = patterns[:5]
+			}
+			parts = append(parts, fmt.Sprintf("Gitignore: %s", strings.Join(patterns, ", ")))
+		}
+	}
+	
+	return strings.Join(parts, "\n")
+}
 // ─── Yardım ───────────────────────────────────────────────────────────────────
 
 func showHelp() {

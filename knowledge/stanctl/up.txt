@@ -1,2 +1,11 @@
-Task: install instana standard edition
-Command: stanctl up
+Task: install instana standard edition, setup instana, deploy instana, installing instana with custom volumes
+Command: stanctl up [flags]
+
+Common flags for installation:
+--volume-data <path>         Custom data directory location (default: /mnt/instana/stanctl/data)
+--volume-objects <path>      Custom objects directory location (default: /mnt/instana/stanctl/objects)
+--volume-metrics <path>      Custom metrics directory location (default: /mnt/instana/stanctl/metrics)
+--volume-analytics <path>    Custom analytics directory location (default: /mnt/instana/stanctl/analytics)
+
+Example with custom volumes:
+stanctl up --volume-data /custom/data --volume-objects /custom/objects --volume-metrics /custom/metrics --volume-analytics /custom/analytics

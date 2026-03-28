@@ -71,9 +71,9 @@ const (
 	defaultEmbedModel  = "nomic-embed-text"
 	embeddingsFile     = "embeddings.json"
 	// Cosine similarity eşiği: bu değerin altındaki sonuçları görmezden gel
-	// 0.75+ = yüksek ilgi, 0.5-0.75 = orta ilgi, <0.5 = düşük ilgi
-	// RAG best practice: 0.75 altındaki sonuçları modele gönderme
-	similarityThreshold = 0.75
+	// 0.70+ = yüksek ilgi, 0.5-0.70 = orta ilgi, <0.5 = düşük ilgi
+	// Lowered from 0.75 to 0.70 to catch more relevant matches
+	similarityThreshold = 0.70
 	// Query embedding cache boyutu
 	cacheMaxSize = 1000
 )

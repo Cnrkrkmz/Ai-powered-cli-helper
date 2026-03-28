@@ -1,3 +1,3 @@
 # DESCRIPTION: Instana Self-Hosted Standard Edition backend and cluster management CLI tool
-# KEYWORDS: instana, backend, stanctl, cluster, datastore, volume, object, analytics, metrics, data, migrate, license, agent, air-gapped, offline
+# KEYWORDS: instana, backend, stanctl, cluster, datastore, volume, object, analytics, metrics, data, migrate, license, agent, air-gapped, offline, install, installing, setup, deploy, deployment, configure, configuration
 # FILES: cluster=up down start stop cluster create delete backup restore | backend=backend apply datastore update install elasticsearch cassandra kafka clickhouse postgres | auth=auth password reset 2fa token idp user | agent=agent monitoring self-monitoring | license=license download update info | airgapped=air-gapped offline disconnected package import | debug=debug troubleshoot benchmark fio disk performance dump config | versions=version release image list

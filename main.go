@@ -362,7 +362,7 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 
 	t2 := time.Now()
 	prompt := buildNLPromptWithContext(cfg.Language, toolContext, dirContextStr, detectedTool, query)
-	suggestedCmd := askLLM(cfg, prompt, 400, useCloud)
+	suggestedCmd := askLLM(cfg, prompt, 150, useCloud)  // Reduced from 400 to 150 for concise output
 	t3 := time.Since(t2)
 
 	suggestedCmd = cleanResponse(suggestedCmd)
@@ -524,7 +524,7 @@ func askOllamaStream(ollamaURL, model, prompt string, numPredict int) string {
 		Options: map[string]interface{}{
 			"temperature": 0.0,  // More deterministic
 			"num_predict": numPredict,
-			"stop":        []string{"\n\n", "Replace", "Make sure", "Note:", "This command"},
+			"stop":        []string{"\n\nHere's", "\n\nThis", "\n\nNote", "\n\nThe above"},
 		},
 	}
 
@@ -1006,9 +1006,11 @@ func buildNLPromptWithContext(lang, toolContext, dirContext, detectedTool string
 		return fmt.Sprintf(`%s--- TASK ---
 %s
 
---- OUTPUT FORMAT ---
-Output ONLY the command. Nothing else. No explanations.
-Example: git add file.txt && git commit -m "message"
+--- INSTRUCTIONS ---
+1. Output the command first
+2. You may add ONE brief line explaining what it does (optional)
+3. NO detailed explanations, NO tutorials, NO breakdowns
+4. Keep it under 2 lines total
 
 COMMAND:`, contextBlock, query)
 	}
@@ -1045,25 +1047,91 @@ func extractSubCommand(args []string) string {
 
 func cleanResponse(raw string) string {
 	s := strings.TrimSpace(raw)
-	// Remove markdown code blocks
-	s = regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```").ReplaceAllString(s, "$1")
+	
+	// Remove markdown code blocks and extract content
+	codeBlockPattern := regexp.MustCompile("(?s)```[a-z]*\n?(.*?)```")
+	if matches := codeBlockPattern.FindStringSubmatch(s); len(matches) > 1 {
+		s = matches[1]
+	}
 	s = strings.Trim(s, "`")
 	
-	// For multi-line commands, preserve all non-comment lines
+	// Split into lines
 	lines := strings.Split(s, "\n")
-	var validLines []string
+	var commandLines []string
+	
+	// Patterns that indicate explanatory text (not commands)
+	explanationPatterns := []*regexp.Regexp{
+		regexp.MustCompile(`(?i)^(to|you can|the command|this command|here|use|try|run)`),
+		regexp.MustCompile(`(?i)(following|below|above|example):`),
+		regexp.MustCompile(`(?i)^(note|tip|warning|important):`),
+	}
 	
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
+		
 		// Skip empty lines and comments
-		if line != "" && !strings.HasPrefix(line, "#") && !strings.HasPrefix(line, "//") {
-			validLines = append(validLines, line)
+		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+			continue
+		}
+		
+		// Skip explanatory lines
+		isExplanation := false
+		for _, pattern := range explanationPatterns {
+			if pattern.MatchString(line) {
+				isExplanation = true
+				break
+			}
+		}
+		
+		if isExplanation {
+			continue
+		}
+		
+		// Check if line looks like a command (starts with command name or has shell operators)
+		looksLikeCommand := false
+		
+		// Common command starters
+		commandStarters := []string{
+			"sudo", "git", "docker", "kubectl", "npm", "yarn", "pip", "go",
+			"cd", "ls", "cat", "grep", "find", "awk", "sed", "tar", "curl",
+			"ssh", "scp", "rsync", "chmod", "chown", "ps", "kill", "stanctl",
+			"df", "du", "top", "htop", "free", "mount", "umount",
+		}
+		
+		fields := strings.Fields(line)
+		if len(fields) > 0 {
+			firstWord := fields[0]
+			for _, cmd := range commandStarters {
+				if firstWord == cmd || strings.HasPrefix(firstWord, cmd) {
+					looksLikeCommand = true
+					break
+				}
+			}
+		}
+		
+		// Has shell operators
+		if strings.Contains(line, "&&") || strings.Contains(line, "||") ||
+		   strings.Contains(line, "|") || strings.Contains(line, ";") ||
+		   strings.HasPrefix(line, "$") {
+			looksLikeCommand = true
+		}
+		
+		if looksLikeCommand {
+			commandLines = append(commandLines, line)
 		}
 	}
 	
-	// Return all valid lines joined (preserves multi-line commands)
-	if len(validLines) > 0 {
-		return strings.Join(validLines, "\n")
+	// If we found command lines, return them
+	if len(commandLines) > 0 {
+		return strings.Join(commandLines, "\n")
+	}
+	
+	// Fallback: return first non-empty, non-explanation line
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line != "" && !strings.HasPrefix(line, "#") {
+			return line
+		}
 	}
 	
 	return ""

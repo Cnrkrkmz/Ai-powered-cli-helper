@@ -389,6 +389,8 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 	fmt.Printf("▶ Çalıştırayım mı? [e/h]: ")
 
 	executed := false
+	correctCmd := finalCmd // Varsayılan olarak önerilen komut
+	
 	if readYesNo() {
 		executed = true
 		runCommand(finalCmd)
@@ -401,6 +403,20 @@ func handleNLMode(cfg Config, query string, ignoreHistory bool, useCloud bool) {
 		fmt.Println("✅ Komut training data'ya eklendi")
 	} else {
 		fmt.Println("İptal edildi.")
+		
+		// Kullanıcı çalıştırmak istemedi, doğru komutu öğrenmek ister miyiz?
+		fmt.Printf("▶ Doğru komutu öğretmek ister misin? [e/h]: ")
+		if readYesNo() {
+			correctCmd = askForCorrectCommand(finalCmd)
+			if correctCmd != "" && correctCmd != finalCmd {
+				// Doğru komutu training data'ya ekle
+				if detectedTool == "none" {
+					detectedTool = "general"
+				}
+				addApprovedCommand(query, correctCmd, detectedTool)
+				fmt.Println("✅ Doğru komut training data'ya eklendi")
+			}
+		}
 	}
 
 	if !ignoreHistory {
@@ -1218,6 +1234,26 @@ func editCommand(originalCmd string) string {
 	}
 	
 	return edited
+}
+
+func askForCorrectCommand(suggestedCmd string) string {
+	fmt.Printf("\n📚 Model önerisi: %s\n", suggestedCmd)
+	fmt.Printf("📝 Doğru komutu yaz (Enter = iptal):\n")
+	fmt.Printf("   Doğru komut: ")
+	
+	reader := bufio.NewReader(os.Stdin)
+	correctCmd, err := reader.ReadString('\n')
+	if err != nil {
+		return ""
+	}
+	
+	correctCmd = strings.TrimSpace(correctCmd)
+	if correctCmd == "" {
+		fmt.Println("İptal edildi.")
+		return ""
+	}
+	
+	return correctCmd
 }
 
 func askToEdit(cmd string) (string, bool) {
